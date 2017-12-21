@@ -3,16 +3,19 @@ class Stack():
     def __init__(self, size=256):
         self.array = [0] * size
         self.head  = 0
-    def push(self, x):
-        self.head = self.head+1
-        self.array[self.head] = x
-        return self.head
-    def pop(self):
-        x = self.array[self.head]
-        self.head = self.head-1
-        return x 
-    def peek(self):
-        return self.array[self.head]
+
+def push(stack, x):
+    stack.head = stack.head+1
+    stack.array[stack.head] = x
+    return stack.head
+
+def pop(stack):
+    x = stack.array[stack.head]
+    stack.head = stack.head-1
+    return x 
+
+def peek(stack):
+    return stack.array[stack.head]
 
 class OpCode:
     NOP     = 0
@@ -25,32 +28,34 @@ class OpCode:
     ICONST2 = 7
     PRINT   = 8
 
+
 class CPU():
     def __init__(self):
         self.opStack = Stack()
         self.ip = 0
-    def execute(self, instructions=[]):
-        op = instructions[self.ip]
-        while(op != OpCode.HALT):
-            self.ip = self.ip + 1
-            if op == OpCode.NOP:
-                pass
-            elif op == OpCode.IADD:
-                x = self.opStack.pop()
-                y = self.opStack.pop()
-                self.opStack.push(x+y)
-            elif op == OpCode.ICONST0:
-                self.opStack.push(0)   
-            elif op == OpCode.ICONST1:
-                self.opStack.push(1)    
-            elif op == OpCode.ICONST2:
-                self.opStack.push(2)                                             
-            elif op == OpCode.ISUB:
-                x = self.opStack.pop()
-                y = self.opStack.pop()
-                self.opStack.push(x-y)                
-            elif op == OpCode.PRINT:
-                print(self.opStack.pop())
 
-            op = instructions[self.ip]
+def execute(cpu, instructions=[]):
+    op = instructions[cpu.ip]
+    while(op != OpCode.HALT):
+        cpu.ip = cpu.ip + 1
+        if op == OpCode.NOP:
+            pass
+        elif op == OpCode.IADD:
+            x = pop(cpu.opStack)
+            y = pop(cpu.opStack)
+            push(cpu.opStack,x+y)
+        elif op == OpCode.ICONST0:
+            push(cpu.opStack,0)  
+        elif op == OpCode.ICONST1:
+            push(cpu.opStack,1)    
+        elif op == OpCode.ICONST2:
+            push(cpu.opStack,2)                                             
+        elif op == OpCode.ISUB:
+            x = pop(cpu.opStack)
+            y = pop(cpu.opStack)
+            push(cpu.opStack,x-y)              
+        elif op == OpCode.PRINT:
+            print(cpu.opStack.pop())
+            
+        op = instructions[cpu.ip]
     
