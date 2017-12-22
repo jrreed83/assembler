@@ -18,4 +18,6 @@ class Token:
         if self.txt is not None:
             return '<{0}, {1}>'.format(self.tag,self.txt)
         else:
-            return '<{0}>'.format(self.tag)    
+            return '<{0}>'.format(self.tag)
+    def __repr__(self):
+        return self.__str__()    
