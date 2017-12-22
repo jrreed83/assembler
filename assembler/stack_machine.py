@@ -1,4 +1,3 @@
-
 class Stack():
     def __init__(self, size=256):
         self.array = [0] * size
@@ -35,27 +34,29 @@ class CPU():
         self.ip = 0
 
 def execute(cpu, instructions=[]):
-    op = instructions[cpu.ip]
+    ip = cpu.ip
+    opStack = cpu.opStack
+    op = instructions[ip]
     while(op != OpCode.HALT):
-        cpu.ip = cpu.ip + 1
+        ip = ip + 1
         if op == OpCode.NOP:
             pass
         elif op == OpCode.IADD:
-            x = pop(cpu.opStack)
-            y = pop(cpu.opStack)
-            push(cpu.opStack,x+y)
+            x = pop(opStack)
+            y = pop(opStack)
+            push(opStack,x+y)
         elif op == OpCode.ICONST0:
-            push(cpu.opStack,0)  
+            push(opStack,0)  
         elif op == OpCode.ICONST1:
-            push(cpu.opStack,1)    
+            push(opStack,1)    
         elif op == OpCode.ICONST2:
-            push(cpu.opStack,2)                                             
+            push(opStack,2)                                             
         elif op == OpCode.ISUB:
-            x = pop(cpu.opStack)
-            y = pop(cpu.opStack)
-            push(cpu.opStack,x-y)              
+            x = pop(opStack)
+            y = pop(opStack)
+            push(opStack,x-y)              
         elif op == OpCode.PRINT:
-            print(cpu.opStack.pop())
-            
-        op = instructions[cpu.ip]
+            print(opStack.pop())
+
+        op = instructions[ip]
     
