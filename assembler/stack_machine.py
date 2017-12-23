@@ -42,9 +42,9 @@ def execute(cpu, instructions=[]):
         if op == OpCode.NOP:
             pass
         elif op == OpCode.IADD:
-            x = pop(op_stack)
-            y = pop(op_stack)
-            push(op_stack, x+y)
+            x_1 = pop(op_stack)
+            x_2 = pop(op_stack)
+            push(op_stack, x_1+x_2)
         elif op == OpCode.ICONST0:
             push(op_stack, 0)  
         elif op == OpCode.ICONST1:
@@ -52,9 +52,9 @@ def execute(cpu, instructions=[]):
         elif op == OpCode.ICONST2:
             push(op_stack, 2)                                             
         elif op == OpCode.ISUB:
-            x = pop(op_stack)
-            y = pop(op_stack)
-            push(op_stack, x-y)              
+            x_1 = pop(op_stack)
+            x_2 = pop(op_stack)
+            push(op_stack, x_1-x_2)              
         elif op == OpCode.PRINT:
             print(op_stack.pop())
 
