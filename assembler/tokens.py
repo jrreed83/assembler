@@ -39,11 +39,18 @@ class Token:
             return '[{0}: {1}]'.format(self.tag[0], self.tag[1])
     def __repr__(self):
         return self.__str__()    
+    def __eq__(self,that):
+        return (self.tag == that.tag) and (self.txt == that.txt)
 
 class Lexer:
-    def __init__(self, stream = None, reserved = {}):
-        self.sid = stream
-        self.reserved = reserved
+    def __init__(self, reserved = None, what_to_lex = {}):
+        self.reserved = reserved        
+        if type(what_to_lex) is str:
+            self.sid = io.StringIO(what_to_lex)
+        elif type(what_to_lex) is io.StringIO:
+            self.sid = what_to_lex 
+        else:
+            raise Exception('Bad input')
     def next_char(self):
         return self.sid.read(1) 
     def next_token(self):
@@ -69,7 +76,7 @@ class Lexer:
             return Token(NUMBER, buffer)           
 
 if __name__ == '__main__':
-    lexer = Lexer(io.StringIO('ipush 7 halt'), RESERVED)
+    lexer = Lexer(RESERVED, 'ipush 7 halt')
     word = lexer.next_token()
     print(word)
     word = lexer.next_token()

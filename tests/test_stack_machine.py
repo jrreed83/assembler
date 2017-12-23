@@ -1,5 +1,4 @@
-def test_foo():
-    assert(1==1)
+from assembler.tokens import *
 
-def test_bar():
-    assert(1==2)
+def test_token_equality():
+    assert(Token(IADD) == Token(IADD))
