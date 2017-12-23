@@ -1,34 +1,47 @@
 import io
 
-RESERVED = [
-    'nop',
-    'halt',
-    'iadd',
-    'isub',
-    'imul',
-    'iconst0',
-    'iconst1',  
-    'iconst2',
-    'ipush',
-    'print'      
-]
+NOP = ('NOP', 0)
+HALT = ('HALT', 1)
+IADD = ('IADD', 2)
+ISUB = ('ISUB', 3)
+IMUL = ('IMUL', 4)
+ICONST0 = ('ICONST0', 5)
+ICONST1 = ('ICONST1', 6)
+ICONST2 = ('ICONST2', 7)
+IPUSH = ('IPUSH', 8)
+PRINT = ('PRINT', 9)
+NUMBER = ('NUMBER',)
+WORD = ('WORD',)
+
+RESERVED = {
+    'nop': NOP,
+    'halt': HALT,
+    'iadd': IADD,
+    'isub': ISUB,
+    'imul': IMUL,
+    'iconst0': ICONST0,
+    'iconst1': ICONST1, 
+    'iconst2': ICONST2,
+    'ipush': IPUSH,
+    'print': PRINT,      
+}
 
 
 
 class Token:
-    def __init__(self, tag='NOP', txt=None):
+    def __init__(self, tag=NOP, txt=None):
         self.tag = tag
         self.txt = txt
     def __str__(self):
         if self.txt is not None:
-            return '[{0} {1}]'.format(self.tag, self.txt)
+            return '[{0} {1}]'.format(self.tag[0], self.txt)
         else:
-            return '[{0}]'.format(self.tag)
+            return '[{0}: {1}]'.format(self.tag[0], self.tag[1])
     def __repr__(self):
         return self.__str__()    
 
 class Lexer:
-    def __init__(self, stream = None, reserved = []):
+    def __init__(self, stream = None, reserved = {}):
         self.sid = stream
         self.reserved = reserved
     def next_char(self):
@@ -43,17 +56,17 @@ class Lexer:
             while peek.isalpha():
                 buffer += peek 
                 peek = self.next_char()
-            if buffer in self.reserved:
-                return Token(buffer.upper())
+            if buffer in self.reserved.keys():
+                return Token(self.reserved[buffer])
             else: 
-                return Token('WORD', buffer)
+                return Token(WORD, buffer)
         elif peek.isdigit():
             buffer = peek
             peek = self.next_char()
             while peek.isdigit():
                 buffer += peek 
                 peek = self.next_char()
-            return Token('NUMBER', buffer)           
+            return Token(NUMBER, buffer)           
 
 if __name__ == '__main__':
     lexer = Lexer(io.StringIO('ipush 7 halt'), RESERVED)
