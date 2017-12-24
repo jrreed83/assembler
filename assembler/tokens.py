@@ -43,11 +43,26 @@ class Token:
         return (self.tag == that.tag) and (self.txt == that.txt)
 
 class Lexer_:
-    def __init__(self, reserved=None):
+    def __init__(self, input=''):
         self.reserved = {}
-        self.curr_pos = 0
-        self.input = ''
+        self.pos = 0
+        self.input = input
         self.line = 0
+    def __repr__(self):
+        return '[{0}]'.format(self.pos)
+
+def peek(lexer):
+    return lexer.input[lexer.pos]
+
+def white_space(lexer):
+    while True:
+        if peek(lexer) ==  ' ' or peek(lexer) == '\t':
+            lexer.pos += 1
+        elif peek(lexer) == '\n':
+            lexer.pos += 1
+            lexer.line += 1
+        else:
+            break
 
 def action(to_match, lexer):
     if to_match == lexer.input[lexer.curr_pos:lexer.curr_pos+len(to_match)]:
