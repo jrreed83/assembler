@@ -42,6 +42,19 @@ class Token:
     def __eq__(self,that):
         return (self.tag == that.tag) and (self.txt == that.txt)
 
+class Lexer_:
+    def __init__(self, reserved=None):
+        self.reserved = {}
+        self.curr_pos = 0
+        self.input = ''
+        self.line = 0
+
+def action(to_match, lexer):
+    if to_match == lexer.input[lexer.curr_pos:lexer.curr_pos+len(to_match)]:
+        lexer.curr_pos += len(to_match)
+        return (True, Token(NOP))
+    else:
+        return (False, {})
 class Lexer:
     def __init__(self, reserved = None, what_to_lex = {}):
         self.reserved = reserved        
