@@ -12,6 +12,7 @@ IPUSH = ('IPUSH', 8)
 PRINT = ('PRINT', 9)
 NUMBER = ('NUMBER',)
 WORD = ('WORD',)
+LABEL = ('LABEL',)
 
 RESERVED = {
     'nop': NOP,
@@ -34,9 +35,9 @@ class Token:
         self.txt = txt
     def __str__(self):
         if self.txt is not None:
-            return '[{0} {1}]'.format(self.tag[0], self.txt)
+            return '{0} {1}'.format(self.tag[0], self.txt)
         else:
-            return '[{0}: {1}]'.format(self.tag[0], self.tag[1])
+            return '{0}'.format(self.tag[0])
     def __repr__(self):
         return self.__str__()    
     def __eq__(self,that):
@@ -88,6 +89,17 @@ def number(lexer):
             break
     return token 
 
+def label(lexer):
+    white_space(lexer)
+    start = lexer.pos
+    stop = lexer.pos
+    while True:
+        if lexer.input[stop] != ':':
+            stop += 1
+        else:
+            lexer.pos = stop 
+            return Token(tag = LABEL, txt = lexer.input[start:stop])
+
 def match(string, lexer):
     white_space(lexer)
     if lexer.input[lexer.pos:lexer.pos+len(string)] == string:
@@ -101,9 +113,9 @@ def match(string, lexer):
        
 
 if __name__ == '__main__':
-    lexer = Lexer('iconst0\n halt\n')
-    tok1 = match('iconst0', lexer)
-    tok2 = match('halt',lexer)
+    lexer = Lexer('label: halt')
+    tok1 = label(lexer)
+    tok2 = match('halt', lexer)
     print([tok1, tok2])
         
         
