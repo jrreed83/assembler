@@ -71,8 +71,16 @@ def white_space(lexer):
         else:
             break
 
+def trim_white_space(original_function):
+    def new_function(*args, **kwargs):
+        print('Trimming white space')
+        white_space(args[0])
+        result = original_function(*args, **kwargs)
+        return result
+    return new_function
+
+@trim_white_space
 def number(lexer):
-    white_space(lexer)
     start = lexer.pos 
     stop = lexer.pos 
 
@@ -80,28 +88,27 @@ def number(lexer):
         return None 
     stop += 1 
 
-    while True: 
-        if lexer.input[stop].isdigit():
+    while stop < len(lexer.input): 
+        if lexer.input[stop].isdigit() or (lexer.input[stop] == '.'):
             stop += 1
         else:
             token = Token(tag = NUMBER, txt = lexer.input[start:stop])
             lexer.pos = stop
-            break
-    return token 
+            return token
 
+@trim_white_space
 def label(lexer):
-    white_space(lexer)
     start = lexer.pos
     stop = lexer.pos
     while True:
         if lexer.input[stop] != ':':
             stop += 1
         else:
-            lexer.pos = stop 
+            lexer.pos = stop+1 
             return Token(tag = LABEL, txt = lexer.input[start:stop])
 
-def match(string, lexer):
-    white_space(lexer)
+@trim_white_space
+def match(lexer, string):
     if lexer.input[lexer.pos:lexer.pos+len(string)] == string:
         lexer.pos += len(string)
         if string in RESERVED.keys():
@@ -113,10 +120,15 @@ def match(string, lexer):
        
 
 if __name__ == '__main__':
-    lexer = Lexer('label: halt')
-    tok1 = label(lexer)
-    tok2 = match('halt', lexer)
-    print([tok1, tok2])
+    lexer = Lexer('1234 43.4 5674 foo: iconst0\n')
+    tok1 = number(lexer)
+    tok2 = number(lexer)
+    tok3 = number(lexer)
+    tok4 = label(lexer)
+    tok5 = match(lexer, 'iconst0')
+    print([tok1, tok2, tok3, tok4, tok5])
+
+    print(lexer)
         
         
 
