@@ -42,7 +42,7 @@ class Token:
     def __eq__(self,that):
         return (self.tag == that.tag) and (self.txt == that.txt)
 
-class Lexer_:
+class Lexer:
     def __init__(self, input=''):
         self.reserved = {}
         self.pos = 0
@@ -54,63 +54,54 @@ class Lexer_:
 def peek(lexer):
     return lexer.input[lexer.pos]
 
+def forward(lexer):
+    lexer.pos += 1
+
+def back(lexer):
+    lexer.pos -= 1
+
 def white_space(lexer):
     while True:
         if peek(lexer) ==  ' ' or peek(lexer) == '\t':
-            lexer.pos += 1
+            forward(lexer)
         elif peek(lexer) == '\n':
-            lexer.pos += 1
+            forward(lexer)
             lexer.line += 1
         else:
             break
 
-def action(to_match, lexer):
-    if to_match == lexer.input[lexer.curr_pos:lexer.curr_pos+len(to_match)]:
-        lexer.curr_pos += len(to_match)
-        return (True, Token(NOP))
-    else:
-        return (False, {})
-class Lexer:
-    def __init__(self, reserved = None, what_to_lex = {}):
-        self.reserved = reserved        
-        if type(what_to_lex) is str:
-            self.sid = io.StringIO(what_to_lex)
-        elif type(what_to_lex) is io.StringIO:
-            self.sid = what_to_lex 
+def number(lexer):
+    ptr = lexer.pos
+    if not lexer.input[ptr].isdigit():
+        return None 
+    ptr += 1 
+
+    while True: 
+        if lexer.input[ptr].isdigit():
+            ptr += 1
         else:
-            raise Exception('Bad input')
-    def next_char(self):
-        return self.sid.read(1) 
-    def next_token(self):
-        peek = self.next_char() 
-        while peek.isspace():
-            peek = self.next_char()
-        if peek.isalpha():
-            buffer = peek
-            peek = self.next_char()
-            while peek.isalpha():
-                buffer += peek 
-                peek = self.next_char()
-            if buffer in self.reserved.keys():
-                return Token(self.reserved[buffer])
-            else: 
-                return Token(WORD, buffer)
-        elif peek.isdigit():
-            buffer = peek
-            peek = self.next_char()
-            while peek.isdigit():
-                buffer += peek 
-                peek = self.next_char()
-            return Token(NUMBER, buffer)           
+            token = Token(tag = NUMBER, txt = lexer.input[lexer.pos:lexer.pos+ptr])
+            lexer.pos = ptr
+            break
+    return token 
+
+def match(string, lexer):
+    if lexer.input[lexer.pos:lexer.pos+len(string)] == string:
+        lexer.pos += len(string)
+        if string in RESERVED.keys():
+            return Token(tag = RESERVED[string])
+        else:
+            return Token(tag = WORD, txt = string)
+    else:
+        return None
+       
 
 if __name__ == '__main__':
-    lexer = Lexer(RESERVED, 'ipush 7 halt')
-    word = lexer.next_token()
-    print(word)
-    word = lexer.next_token()
-    print(word)
-    word = lexer.next_token()
-    print(word)    
+    lexer = Lexer('iconst0haltfoo')
+    tok1 = match('iconst0', lexer)
+    tok2 = match('halt',lexer)
+    tok3 = match('foo', lexer)
+    print([tok1, tok2, tok3])
         
         
 
