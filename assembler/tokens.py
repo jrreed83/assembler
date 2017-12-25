@@ -71,21 +71,25 @@ def white_space(lexer):
             break
 
 def number(lexer):
-    ptr = lexer.pos
-    if not lexer.input[ptr].isdigit():
+    white_space(lexer)
+    start = lexer.pos 
+    stop = lexer.pos 
+
+    if not lexer.input[stop].isdigit():
         return None 
-    ptr += 1 
+    stop += 1 
 
     while True: 
-        if lexer.input[ptr].isdigit():
-            ptr += 1
+        if lexer.input[stop].isdigit():
+            stop += 1
         else:
-            token = Token(tag = NUMBER, txt = lexer.input[lexer.pos:lexer.pos+ptr])
-            lexer.pos = ptr
+            token = Token(tag = NUMBER, txt = lexer.input[start:stop])
+            lexer.pos = stop
             break
     return token 
 
 def match(string, lexer):
+    white_space(lexer)
     if lexer.input[lexer.pos:lexer.pos+len(string)] == string:
         lexer.pos += len(string)
         if string in RESERVED.keys():
@@ -97,11 +101,10 @@ def match(string, lexer):
        
 
 if __name__ == '__main__':
-    lexer = Lexer('iconst0haltfoo')
+    lexer = Lexer('iconst0\n halt\n')
     tok1 = match('iconst0', lexer)
     tok2 = match('halt',lexer)
-    tok3 = match('foo', lexer)
-    print([tok1, tok2, tok3])
+    print([tok1, tok2])
         
         
 
