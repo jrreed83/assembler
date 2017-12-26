@@ -69,7 +69,9 @@ def ignore(lexer):
     lexer.start = lexer.pos 
 
 def peek(lexer):
-    return lexer.input[lexer.pos]
+    c = next_char(lexer)
+    rewind(lexer)
+    return c
 
 def white_space(lexer):
     c = next_char(lexer)    
