@@ -54,24 +54,28 @@ class Lexer:
     def __repr__(self):
         return '[{0}]'.format(self.pos)
 
+def next_char(lexer):
+    if lexer.pos >= len(lexer.input):
+        return {'error': 'end of file'} 
+    else:
+        c = lexer.input[lexer.pos]
+        lexer.pos += 1
+        return c
+
+def rewind(lexer):
+    lexer.pos -= 1 
+
+def ignore(lexer):
+    lexer.start = lexer.pos 
+
 def peek(lexer):
     return lexer.input[lexer.pos]
 
-def forward(lexer):
-    lexer.pos += 1
-
-def back(lexer):
-    lexer.pos -= 1
-
 def white_space(lexer):
-    while True:
-        if peek(lexer) ==  ' ' or peek(lexer) == '\t':
-            forward(lexer)
-        elif peek(lexer) == '\n':
-            forward(lexer)
-            lexer.line += 1
-        else:
-            break
+    c = next_char(lexer)    
+    while c.isspace():
+        c = next_char(lexer) 
+    rewind(lexer)
 
 def trim_white_space(original_function):
     def new_function(*args, **kwargs):
