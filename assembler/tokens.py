@@ -47,8 +47,10 @@ class Lexer:
     def __init__(self, input=''):
         self.reserved = {}
         self.pos = 0
+        self.start = 0
         self.input = input
         self.line = 0
+        self.tokens = []
     def __repr__(self):
         return '[{0}]'.format(self.pos)
 
@@ -81,42 +83,43 @@ def trim_white_space(original_function):
 
 @trim_white_space
 def number(lexer):
-    start = lexer.pos 
-    stop = lexer.pos 
 
-    if not lexer.input[stop].isdigit():
+    if not lexer.input[lexer.pos].isdigit():
         return None 
-    stop += 1 
+    lexer.pos += 1 
 
-    while stop < len(lexer.input): 
-        if lexer.input[stop].isdigit() or (lexer.input[stop] == '.'):
-            stop += 1
+    while lexer.pos < len(lexer.input): 
+        if lexer.input[lexer.pos].isdigit() or (lexer.input[lexer.pos] == '.'):
+            lexer.pos += 1
         else:
-            token = Token(tag = NUMBER, txt = lexer.input[start:stop])
-            lexer.pos = stop
-            return token
+            token = Token(tag = NUMBER, txt = lexer.input[lexer.start:lexer.pos])
+            lexer.start = lexer.pos
+            lexer.tokens += [token]
+            break 
+
 
 @trim_white_space
 def label(lexer):
-    start = lexer.pos
-    stop = lexer.pos
     while True:
-        if lexer.input[stop] != ':':
-            stop += 1
+        if lexer.input[lexer.pos] != ':':
+            lexer.pos += 1
         else:
-            lexer.pos = stop+1 
-            return Token(tag = LABEL, txt = lexer.input[start:stop])
+            token = Token(tag = LABEL, txt = lexer.input[lexer.start:lexer.pos])
+            lexer.start = lexer.pos+1            
+            lexer.tokens += [token]
+            break 
 
 @trim_white_space
-def match(string, lexer):
-    if lexer.input[lexer.pos:lexer.pos+len(string)] == string:
-        lexer.pos += len(string)
+def match(lexer, string):
+    if lexer.input[lexer.start:lexer.start+len(string)] == string:
+        lexer.start += len(string)
+
         if string in RESERVED.keys():
-            return Token(tag = RESERVED[string])
+            token = Token(tag = RESERVED[string])
+            lexer.tokens += [token]
         else:
-            return Token(tag = WORD, txt = string)
-    else:
-        return None
+            token = Token(tag = WORD, txt = string)
+            lexer.tokens += [token]
 
 STATES = {
     'number': number,
@@ -126,18 +129,13 @@ STATES = {
 if __name__ == '__main__':
     lexer = Lexer('1234 43.4 5674 foo: iconst0\n')
 
-    toks = []
-    while lexer.pos < len(lexer.input):
-        while True:
-            tok = number(lexer)
-            if tok is not None:
-                break
-        tok1 = number(lexer)
-        tok2 = number(lexer)
-        tok3 = number(lexer)
-        tok4 = label(lexer)
-        tok5 = match(lexer, 'iconst0')
-    print([tok1, tok2, tok3, tok4, tok5])
+
+    number(lexer)
+    number(lexer)
+    number(lexer)
+    label(lexer)
+    match(lexer, 'iconst0')
+    print(lexer.tokens)
 
     print(lexer)
         

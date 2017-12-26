@@ -26,7 +26,7 @@ ICONST0 = 5
 ICONST1 = 6
 ICONST2 = 7
 PRINT = 8
-
+POP = 9
 
 class CPU():
     def __init__(self):
@@ -57,7 +57,8 @@ def execute(cpu, instructions=[]):
             x_2 = pop(op_stack)
             push(op_stack, x_1-x_2)              
         elif op == PRINT:
-            print(op_stack.pop())
-
+            print(pop(op_stack))
+        elif op == POP:
+            pop(op_stack)
         op = instructions[ip]
     
