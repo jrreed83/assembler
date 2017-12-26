@@ -54,16 +54,19 @@ class Lexer:
     def __repr__(self):
         return '[{0}]'.format(self.pos)
 
+
 def next_char(lexer):
     if lexer.pos >= len(lexer.input):
         return {'error': 'end of file'} 
     else:
         c = lexer.input[lexer.pos]
         lexer.pos += 1
+        lexer.start = lexer.pos
         return c
 
 def rewind(lexer):
     lexer.pos -= 1 
+    lexer.start = lexer.pos
 
 def ignore(lexer):
     lexer.start = lexer.pos 
@@ -73,23 +76,74 @@ def peek(lexer):
     rewind(lexer)
     return c
 
+def at_front(to_match, lexer):
+    if to_match == lexer.input[lexer.start:lexer.start+len(to_match)]:
+        return True 
+    else:
+        return False
+
+def iconst0(lexer): 
+    to_match = 'iconst0'
+    if at_front(to_match, lexer):
+        lexer.start += len(to_match)
+        lexer.pos = lexer.start
+        lexer.tokens += [ICONST0[1]]
+
+def iconst1(lexer): 
+    to_match = 'iconst1'
+    if at_front(to_match, lexer):
+        lexer.start += len(to_match)
+        lexer.pos = lexer.start
+        lexer.tokens += [ICONST1[1]]
+
+def iconst2(lexer): 
+    to_match = 'iconst2'
+    if at_front(to_match, lexer):
+        lexer.start += len(to_match)
+        lexer.pos = lexer.start
+        lexer.tokens += [ICONST2[1]]
+
+def iadd(lexer): 
+    to_match = 'iadd'
+    if at_front(to_match, lexer):
+        lexer.start += len(to_match)
+        lexer.pos = lexer.start
+        lexer.tokens += [IADD[1]]
+
+def isub(lexer): 
+    to_match = 'isub'
+    if at_front(to_match, lexer):
+        lexer.start += len(to_match)
+        lexer.pos = lexer.start
+        lexer.tokens += [ISUB[1]]     
+
+def ipush(lexer):
+    to_match = 'ipush'
+    if at_front(to_match, lexer):
+        lexer.start += len(to_match)
+        lexer.pos = lexer.start
+        lexer.tokens += [IPUSH[1]] 
+
+        number(lexer)
+
+
+def halt(lexer): 
+    white_space(lexer)
+    to_match = 'halt'
+    if at_front(to_match, lexer):
+        lexer.start += len(to_match)
+        lexer.pos = lexer.start
+        lexer.tokens += [HALT[1]]
+
 def white_space(lexer):
     c = next_char(lexer)    
     while c.isspace():
         c = next_char(lexer) 
     rewind(lexer)
+    lexer.start = lexer.pos
 
-def trim_white_space(original_function):
-    def new_function(*args, **kwargs):
-        print('Trimming white space')
-        white_space(args[0])
-        result = original_function(*args, **kwargs)
-        return result
-    return new_function
-
-@trim_white_space
 def number(lexer):
-
+    white_space(lexer)
     if not lexer.input[lexer.pos].isdigit():
         return None 
     lexer.pos += 1 
@@ -98,13 +152,12 @@ def number(lexer):
         if lexer.input[lexer.pos].isdigit() or (lexer.input[lexer.pos] == '.'):
             lexer.pos += 1
         else:
-            token = Token(tag = NUMBER, txt = lexer.input[lexer.start:lexer.pos])
+            number = lexer.input[lexer.start:lexer.pos]
+            lexer.tokens += [number]
             lexer.start = lexer.pos
-            lexer.tokens += [token]
             break 
 
 
-@trim_white_space
 def label(lexer):
     while True:
         if lexer.input[lexer.pos] != ':':
@@ -115,7 +168,6 @@ def label(lexer):
             lexer.tokens += [token]
             break 
 
-@trim_white_space
 def match(lexer, string):
     if lexer.input[lexer.start:lexer.start+len(string)] == string:
         lexer.start += len(string)
@@ -133,18 +185,15 @@ STATES = {
 }       
 
 if __name__ == '__main__':
-    lexer = Lexer('1234 43.4 5674 foo: iconst0\n')
+    lexer = Lexer('ipush 43 halt\n')
 
 
-    number(lexer)
-    number(lexer)
-    number(lexer)
-    label(lexer)
-    match(lexer, 'iconst0')
+    ipush(lexer)
+    halt(lexer)
     print(lexer.tokens)
+    print(lexer.start)
+    print(lexer.pos)
 
-    print(lexer)
-        
         
 
 
