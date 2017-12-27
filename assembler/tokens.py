@@ -126,6 +126,14 @@ def ipush(assm):
         return True 
     return False
 
+def spush(assm):
+    to_match = 'spush'
+    if at_front(to_match, assm):
+        assm.op_codes += [SPUSH] 
+        assm.ip += 1        
+        return True 
+    return False
+
 def halt(assm): 
     white_space(assm)
     to_match = 'halt'
@@ -163,7 +171,8 @@ def iconst(assm):
 def sconst(assm):
     white_space(assm)
     buffer = char_buffer(assm)
-    assm.constant_pool += [buffer]
+    string = buffer[1:len(buffer)-1]
+    assm.constant_pool += [string]
     index = len(assm.constant_pool)
     assm.op_codes += [index]    
     return True
@@ -190,15 +199,11 @@ def fconst(assm):
       
 
 if __name__ == '__main__':
-    assm = Assembler('ipush 44 halt hello bye 56.4\n')
+    assm = Assembler('spush \'hello\'\n')
 
-
-    ipush(assm)  
-    iconst(assm)
-    halt(assm)
-    sconst(assm)
-    sconst(assm)
-    fconst(assm)
+    if spush(assm):
+        if sconst(assm):
+            pass
     print(assm.op_codes)
     print(assm.constant_pool)
     print(assm.start)
