@@ -36,6 +36,7 @@ class Assembler:
         self.line = 0
         self.op_codes = []
         self.constant_pool = []
+        self.ip = 0
 
     def __repr__(self):
         return '[{0}]'.format(self.pos)
@@ -47,12 +48,16 @@ def next_char(lexer):
     else:
         c = assm.input[assm.pos]
         assm.pos += 1
-        assm.start = assm.pos
         return c
 
 def rewind(assm):
     assm.pos -= 1 
-    assm.start = assm.pos
+
+def rollback(assm):
+    assm.pos = assm.start 
+
+def commit(assm):
+    assm.start = assm.pos 
 
 def ignore(assm):
     assm.start = assm.pos 
@@ -63,62 +68,61 @@ def peek(assm):
     return c
 
 def at_front(to_match, assm):
-    if to_match == assm.input[assm.start:assm.start+len(to_match)]:
-        return True 
+    assm.pos = assm.start + len(to_match)
+    if to_match == assm.input[assm.start:assm.pos]:
+        commit(assm)
+        return True
     else:
+        rollback(assm)
         return False
 
 def iconst0(assm): 
     to_match = 'iconst0'
     if at_front(to_match, assm):
-        assm.start += len(to_match)
-        assm.pos = assm.start
         assm.op_codes += [ICONST0]
-        return True 
-    return False
+        assm.ip += 1
+        return True
+    else:
+        return False
 
 def iconst1(assm): 
     to_match = 'iconst1'
     if at_front(to_match, assm):
-        assm.start += len(to_match)
-        assm.pos = assm.start
         assm.op_codes += [ICONST1]
+        assm.ip += 1        
         return True 
-    return False
+    else:
+        return False
 
 def iconst2(assm): 
     to_match = 'iconst2'
     if at_front(to_match, assm):
-        assm.start += len(to_match)
-        assm.pos = assm.start
         assm.op_codes += [ICONST2]
+        assm.ip += 1        
         return True 
     return False
 
 def iadd(assm): 
     to_match = 'iadd'
     if at_front(to_match, assm):
-        assm.start += len(to_match)
-        assm.pos = assm.start
         assm.op_codes += [IADD]
+        assm.ip += 1        
         return True 
     return False
 
 def isub(assm): 
     to_match = 'isub'
     if at_front(to_match, assm):
-        assm.start += len(to_match)
-        assm.pos = assm.start
-        assm.op_codes += [ISUB]     
+        assm.op_codes += [ISUB]    
+        assm.ip += 1         
         return True 
     return False
 
 def ipush(assm):
     to_match = 'ipush'
     if at_front(to_match, assm):
-        assm.start += len(to_match)
-        assm.pos = assm.start
         assm.op_codes += [IPUSH] 
+        assm.ip += 1        
         return True 
     return False
 
@@ -126,9 +130,8 @@ def halt(assm):
     white_space(assm)
     to_match = 'halt'
     if at_front(to_match, assm):
-        assm.start += len(to_match)
-        assm.pos = assm.start
         assm.op_codes += [HALT]
+        assm.ip += 1        
         return True 
     return False
 
@@ -141,20 +144,38 @@ def white_space(assm):
     rewind(assm)
     assm.start = assm.pos
 
-def number(assm):
-    white_space(assm)
-    if not peek(assm).isdigit():
-        return None 
-    assm.pos += 1 
+def char_buffer(assm, term = lambda x: x.isspace()):
+    buffer = ''
+    c = next_char(assm)
+    while not term(c):
+        buffer += c
+        c = next_char(assm)
+    rewind(assm)
+    return buffer 
 
-    while assm.pos < len(assm.input): 
-        if assm.input[assm.pos].isdigit() or (assm.input[assm.pos] == '.'):
-            assm.pos += 1
-        else:
-            n = assm.input[assm.start:assm.pos]
-            assm.op_codes += [int(n)]
-            assm.start = assm.pos
-            break 
+def iconst(assm):
+    white_space(assm)
+    buffer = char_buffer(assm)
+    assm.op_codes += [int(buffer)]
+    assm.ip += 1    
+    return True
+
+def sconst(assm):
+    white_space(assm)
+    buffer = char_buffer(assm)
+    assm.constant_pool += [buffer]
+    index = len(assm.constant_pool)
+    assm.op_codes += [index]    
+    return True
+
+def fconst(assm):
+    white_space(assm)
+    buffer = char_buffer(assm)
+    assm.constant_pool += [float(buffer)]
+    index = len(assm.constant_pool)
+    assm.op_codes += [index]    
+    return True
+
 
 
 # def label(assm):
@@ -169,13 +190,17 @@ def number(assm):
       
 
 if __name__ == '__main__':
-    assm = Assembler('ipush 43 halt\n')
+    assm = Assembler('ipush 44 halt hello bye 56.4\n')
 
 
     ipush(assm)  
-    number(assm)
+    iconst(assm)
     halt(assm)
+    sconst(assm)
+    sconst(assm)
+    fconst(assm)
     print(assm.op_codes)
+    print(assm.constant_pool)
     print(assm.start)
     print(assm.pos)
 
