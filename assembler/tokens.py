@@ -1,18 +1,17 @@
 import io
 
-NOP = ('NOP', 0)
-HALT = ('HALT', 1)
-IADD = ('IADD', 2)
-ISUB = ('ISUB', 3)
-IMUL = ('IMUL', 4)
-ICONST0 = ('ICONST0', 5)
-ICONST1 = ('ICONST1', 6)
-ICONST2 = ('ICONST2', 7)
-IPUSH = ('IPUSH', 8)
-PRINT = ('PRINT', 9)
-NUMBER = ('NUMBER',)
-WORD = ('WORD',)
-LABEL = ('LABEL',)
+NOP = 0
+HALT = 1
+IADD = 2
+ISUB = 3
+IMUL = 4
+ICONST0 = 5
+ICONST1 = 6
+ICONST2 = 7
+IPUSH = 8
+PRINT = 9
+FPUSH = 10
+SPUSH = 10
 
 RESERVED = {
     'nop': NOP,
@@ -28,171 +27,157 @@ RESERVED = {
 }
 
 
-
-class Token:
-    def __init__(self, tag=NOP, txt=None):
-        self.tag = tag
-        self.txt = txt
-    def __str__(self):
-        if self.txt is not None:
-            return '{0} {1}'.format(self.tag[0], self.txt)
-        else:
-            return '{0}'.format(self.tag[0])
-    def __repr__(self):
-        return self.__str__()    
-    def __eq__(self,that):
-        return (self.tag == that.tag) and (self.txt == that.txt)
-
-class Lexer:
+class Assembler:
     def __init__(self, input=''):
         self.reserved = {}
         self.pos = 0
         self.start = 0
         self.input = input
         self.line = 0
-        self.tokens = []
+        self.op_codes = []
+        self.constant_pool = []
+
     def __repr__(self):
         return '[{0}]'.format(self.pos)
 
 
 def next_char(lexer):
-    if lexer.pos >= len(lexer.input):
-        return {'error': 'end of file'} 
+    if assm.pos >= len(assm.input):
+        raise EOFError('There are no more characters')
     else:
-        c = lexer.input[lexer.pos]
-        lexer.pos += 1
-        lexer.start = lexer.pos
+        c = assm.input[assm.pos]
+        assm.pos += 1
+        assm.start = assm.pos
         return c
 
-def rewind(lexer):
-    lexer.pos -= 1 
-    lexer.start = lexer.pos
+def rewind(assm):
+    assm.pos -= 1 
+    assm.start = assm.pos
 
-def ignore(lexer):
-    lexer.start = lexer.pos 
+def ignore(assm):
+    assm.start = assm.pos 
 
-def peek(lexer):
-    c = next_char(lexer)
-    rewind(lexer)
+def peek(assm):
+    c = next_char(assm)
+    rewind(assm)
     return c
 
-def at_front(to_match, lexer):
-    if to_match == lexer.input[lexer.start:lexer.start+len(to_match)]:
+def at_front(to_match, assm):
+    if to_match == assm.input[assm.start:assm.start+len(to_match)]:
         return True 
     else:
         return False
 
-def iconst0(lexer): 
+def iconst0(assm): 
     to_match = 'iconst0'
-    if at_front(to_match, lexer):
-        lexer.start += len(to_match)
-        lexer.pos = lexer.start
-        lexer.tokens += [ICONST0[1]]
+    if at_front(to_match, assm):
+        assm.start += len(to_match)
+        assm.pos = assm.start
+        assm.op_codes += [ICONST0]
+        return True 
+    return False
 
-def iconst1(lexer): 
+def iconst1(assm): 
     to_match = 'iconst1'
-    if at_front(to_match, lexer):
-        lexer.start += len(to_match)
-        lexer.pos = lexer.start
-        lexer.tokens += [ICONST1[1]]
+    if at_front(to_match, assm):
+        assm.start += len(to_match)
+        assm.pos = assm.start
+        assm.op_codes += [ICONST1]
+        return True 
+    return False
 
-def iconst2(lexer): 
+def iconst2(assm): 
     to_match = 'iconst2'
-    if at_front(to_match, lexer):
-        lexer.start += len(to_match)
-        lexer.pos = lexer.start
-        lexer.tokens += [ICONST2[1]]
+    if at_front(to_match, assm):
+        assm.start += len(to_match)
+        assm.pos = assm.start
+        assm.op_codes += [ICONST2]
+        return True 
+    return False
 
-def iadd(lexer): 
+def iadd(assm): 
     to_match = 'iadd'
-    if at_front(to_match, lexer):
-        lexer.start += len(to_match)
-        lexer.pos = lexer.start
-        lexer.tokens += [IADD[1]]
+    if at_front(to_match, assm):
+        assm.start += len(to_match)
+        assm.pos = assm.start
+        assm.op_codes += [IADD]
+        return True 
+    return False
 
-def isub(lexer): 
+def isub(assm): 
     to_match = 'isub'
-    if at_front(to_match, lexer):
-        lexer.start += len(to_match)
-        lexer.pos = lexer.start
-        lexer.tokens += [ISUB[1]]     
+    if at_front(to_match, assm):
+        assm.start += len(to_match)
+        assm.pos = assm.start
+        assm.op_codes += [ISUB]     
+        return True 
+    return False
 
-def ipush(lexer):
+def ipush(assm):
     to_match = 'ipush'
-    if at_front(to_match, lexer):
-        lexer.start += len(to_match)
-        lexer.pos = lexer.start
-        lexer.tokens += [IPUSH[1]] 
+    if at_front(to_match, assm):
+        assm.start += len(to_match)
+        assm.pos = assm.start
+        assm.op_codes += [IPUSH] 
+        return True 
+    return False
 
-        number(lexer)
-
-
-def halt(lexer): 
-    white_space(lexer)
+def halt(assm): 
+    white_space(assm)
     to_match = 'halt'
-    if at_front(to_match, lexer):
-        lexer.start += len(to_match)
-        lexer.pos = lexer.start
-        lexer.tokens += [HALT[1]]
+    if at_front(to_match, assm):
+        assm.start += len(to_match)
+        assm.pos = assm.start
+        assm.op_codes += [HALT]
+        return True 
+    return False
 
-def white_space(lexer):
-    c = next_char(lexer)    
+def white_space(assm):
+    c = next_char(assm)    
     while c.isspace():
-        c = next_char(lexer) 
-    rewind(lexer)
-    lexer.start = lexer.pos
+        c = next_char(assm) 
+        if c == '\n':
+            assm.line += 1
+    rewind(assm)
+    assm.start = assm.pos
 
-def number(lexer):
-    white_space(lexer)
-    if not lexer.input[lexer.pos].isdigit():
+def number(assm):
+    white_space(assm)
+    if not peek(assm).isdigit():
         return None 
-    lexer.pos += 1 
+    assm.pos += 1 
 
-    while lexer.pos < len(lexer.input): 
-        if lexer.input[lexer.pos].isdigit() or (lexer.input[lexer.pos] == '.'):
-            lexer.pos += 1
+    while assm.pos < len(assm.input): 
+        if assm.input[assm.pos].isdigit() or (assm.input[assm.pos] == '.'):
+            assm.pos += 1
         else:
-            number = lexer.input[lexer.start:lexer.pos]
-            lexer.tokens += [number]
-            lexer.start = lexer.pos
+            n = assm.input[assm.start:assm.pos]
+            assm.op_codes += [int(n)]
+            assm.start = assm.pos
             break 
 
 
-def label(lexer):
-    while True:
-        if lexer.input[lexer.pos] != ':':
-            lexer.pos += 1
-        else:
-            token = Token(tag = LABEL, txt = lexer.input[lexer.start:lexer.pos])
-            lexer.start = lexer.pos+1            
-            lexer.tokens += [token]
-            break 
-
-def match(lexer, string):
-    if lexer.input[lexer.start:lexer.start+len(string)] == string:
-        lexer.start += len(string)
-
-        if string in RESERVED.keys():
-            token = Token(tag = RESERVED[string])
-            lexer.tokens += [token]
-        else:
-            token = Token(tag = WORD, txt = string)
-            lexer.tokens += [token]
-
-STATES = {
-    'number': number,
-    'label': label
-}       
+# def label(assm):
+#     while True:
+#         if assm.input[assm.pos] != ':':
+#             assm.pos += 1
+#         else:
+#             token = Token(tag = LABEL, txt = assm.input[assm.start:assm.pos])
+#             assm.start = assm.pos+1            
+#             assm.op_codes += [token]
+#             break 
+      
 
 if __name__ == '__main__':
-    lexer = Lexer('ipush 43 halt\n')
+    assm = Assembler('ipush 43 halt\n')
 
 
-    ipush(lexer)
-    halt(lexer)
-    print(lexer.tokens)
-    print(lexer.start)
-    print(lexer.pos)
+    ipush(assm)  
+    number(assm)
+    halt(assm)
+    print(assm.op_codes)
+    print(assm.start)
+    print(assm.pos)
 
         
 
