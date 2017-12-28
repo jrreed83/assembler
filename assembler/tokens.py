@@ -34,7 +34,8 @@ class Assembler:
         self.input = input
         self.line = 0
         self.op_codes = []
-        self.constant_pool = []
+        self.constants = []
+        self.labels = {}
         self.ip = 0
 
     def __repr__(self):
@@ -56,6 +57,8 @@ def rollback(assm):
     assm.pos = assm.start 
 
 def commit(assm):
+    assm.op_codes += [assm.input[assm.start:assm.pos]]
+    assm.ip += 1
     assm.start = assm.pos 
 
 def ignore(assm):
@@ -179,6 +182,8 @@ def halt(assm):
 
 def white_space(assm):
     c = next_char(assm)    
+    if c == '\n':
+        assm.line += 1
     while c.isspace():
         c = next_char(assm) 
         if c == '\n':
@@ -192,29 +197,29 @@ def integer(assm):
     if not peek(assm).isdigit():
         return False
 
-    buffer = ''
-    c = next_char(assm)
-    while c.isdigit():
-        buffer += c 
-        c = next_char(assm)
+    while next_char(assm).isdigit():
+        pass
     rewind(assm)
-    assm.op_codes += [int(buffer)]
-    commit(assm)
+    assm.op_codes += [int(assm.input[assm.start:assm.pos])]
+    assm.start = assm.pos
     return True
 
 def string(assm):
     white_space(assm)
     if next_char(assm) == '\"':
-        buffer = ''
+        ignore(assm)
         c = next_char(assm)
         while (c.isalpha() or c.isdigit()):
-            buffer += c 
             c = next_char(assm)
+        rewind(assm)
         if c =='\"':
-            assm.constant_pool += [buffer]
-            index = len(assm.constant_pool)
+            assm.constants += [assm.input[assm.start:assm.pos]]
+            index = len(assm.constants)
             assm.op_codes += [index]   
-            commit(assm)     
+            assm.start = assm.pos   
+            next_char(assm)
+            next_char(assm)
+            ignore(assm)
             return True
     return False
 
@@ -230,10 +235,10 @@ def decimal(assm):
             buffer += c 
             c = next_char(assm)
         rewind(assm)
-        assm.constant_pool += [float(buffer)]
-        index = len(assm.constant_pool)
+        assm.constants += [float(buffer)]
+        index = len(assm.constants)
         assm.op_codes += [index] 
-        commit(assm)
+        assm.start = assm.pos
         return True
     elif peek(assm).isdigit():
         buffer = ''
@@ -248,10 +253,10 @@ def decimal(assm):
                 buffer += c 
                 c = next_char(assm)            
         rewind(assm)
-        assm.constant_pool += [float(buffer)]
-        index = len(assm.constant_pool)
+        assm.constants += [float(buffer)]
+        index = len(assm.constants)
         assm.op_codes += [index] 
-        commit(assm)
+        assm.start = assm.pos
         return True
     return False
 
@@ -268,37 +273,41 @@ def instruction(assm):
         return
     elif halt(assm):
         return
+    elif label(assm):
+        return
 
-# def label(assm):
-#     while True:
-#         if assm.input[assm.pos] != ':':
-#             assm.pos += 1
-#         else:
-#             token = Token(tag = LABEL, txt = assm.input[assm.start:assm.pos])
-#             assm.start = assm.pos+1            
-#             assm.op_codes += [token]
-#             break 
-      
+def label(assm):
+    white_space(assm)
+    while next_char(assm).isalpha():
+        pass
+    rewind(assm)
+    if peek(assm) == ':':        
+        assm.labels[assm.input[assm.start:assm.pos]] = assm.line
+        next_char(assm)
+        ignore(assm)
+        return True
+    return False
 
 if __name__ == '__main__':
     assm = Assembler("""spush "hello" 
-                        ipush 56 
-                        iadd 
-                        isub
-                        halt
+                        ipush 56
+                        foo: 
+                            iadd 
+                            isub
+                            halt
                     """)
-#    if spush(assm):
-#        string(assm)
+
+    instruction(assm)
     instruction(assm)
     instruction(assm)
     instruction(assm)
     instruction(assm)
     instruction(assm)
     print(assm.op_codes)
-    print(assm.constant_pool)
+    print(assm.constants)
     print(assm.start)
     print(assm.pos)
-    print(tail(assm))
+    print(assm.labels)
 
         
 
