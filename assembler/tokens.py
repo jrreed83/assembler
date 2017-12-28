@@ -70,6 +70,7 @@ def tail(assm):
     return assm.input[assm.start:]
 
 def iconst0(assm): 
+    white_space(assm)     
     to_match = 'iconst0'
     assm.pos = assm.start + len(to_match)
     if to_match == assm.input[assm.start:assm.pos]:
@@ -77,10 +78,11 @@ def iconst0(assm):
         assm.ip += 1
         assm.start = assm.pos
         return True
-    else:
-        return False
+    assm.pos = assm.start
+    return False
 
 def iconst1(assm): 
+    white_space(assm)     
     to_match = 'iconst1'
     assm.pos = assm.start + len(to_match)
     if to_match == assm.input[assm.start:assm.pos]:
@@ -88,10 +90,11 @@ def iconst1(assm):
         assm.ip += 1   
         assm.start = assm.pos          
         return True 
-    else:
-        return False
+    assm.pos = assm.start
+    return False
 
 def iconst2(assm): 
+    white_space(assm)     
     to_match = 'iconst2'
     assm.pos = assm.start + len(to_match)
     if to_match == assm.input[assm.start:assm.pos]:
@@ -99,9 +102,11 @@ def iconst2(assm):
         assm.ip += 1      
         assm.start = assm.pos            
         return True 
+    assm.pos = assm.start
     return False
 
 def iadd(assm): 
+    white_space(assm)     
     to_match = 'iadd'
     assm.pos = assm.start + len(to_match)
     if to_match == assm.input[assm.start:assm.pos]:
@@ -109,9 +114,11 @@ def iadd(assm):
         assm.ip += 1        
         assm.start = assm.pos
         return True 
+    assm.pos = assm.start
     return False
 
 def isub(assm): 
+    white_space(assm)     
     to_match = 'isub'
     assm.pos = assm.start + len(to_match)
     if to_match == assm.input[assm.start:assm.pos]:
@@ -119,9 +126,11 @@ def isub(assm):
         assm.ip += 1  
         assm.start = assm.pos               
         return True 
+    assm.pos = assm.start
     return False
 
 def ipush(assm):
+    white_space(assm)     
     to_match = 'ipush'
     assm.pos = assm.start + len(to_match)
     if to_match == assm.input[assm.start:assm.pos]:
@@ -129,9 +138,11 @@ def ipush(assm):
         assm.ip += 1       
         assm.start = assm.pos           
         return True 
+    assm.pos = assm.start
     return False
 
 def spush(assm):
+    white_space(assm)     
     to_match = 'spush'
     assm.pos = assm.start + len(to_match)
     if to_match == assm.input[assm.start:assm.pos]:
@@ -139,9 +150,11 @@ def spush(assm):
         assm.ip += 1   
         assm.start = assm.pos               
         return True 
+    assm.pos = assm.start
     return False
 
 def fpush(assm):
+    white_space(assm)    
     to_match = 'fpush'
     assm.pos = assm.start + len(to_match)
     if to_match == assm.input[assm.start:assm.pos]:
@@ -149,6 +162,7 @@ def fpush(assm):
         assm.ip += 1   
         assm.start = assm.pos               
         return True 
+    assm.pos = assm.start
     return False
 
 def halt(assm): 
@@ -160,6 +174,7 @@ def halt(assm):
         assm.ip += 1     
         assm.start = assm.pos             
         return True 
+    assm.pos = assm.start
     return False
 
 def white_space(assm):
@@ -171,12 +186,6 @@ def white_space(assm):
     rewind(assm)
     assm.start = assm.pos
 
-def char_buffer(string, accept = lambda x: x.isalpha() or x.isdigit()):
-    for i,c in enumerate(string):
-        if not accept(c):
-            break
-    return string[:i]
-
 def integer(assm):
     white_space(assm)
 
@@ -185,7 +194,6 @@ def integer(assm):
 
     buffer = ''
     c = next_char(assm)
-    buffer += c
     while c.isdigit():
         buffer += c 
         c = next_char(assm)
@@ -194,17 +202,15 @@ def integer(assm):
     commit(assm)
     return True
 
-
-
 def string(assm):
     white_space(assm)
-    if next_char(assm) == '\'':
+    if next_char(assm) == '\"':
         buffer = ''
         c = next_char(assm)
         while (c.isalpha() or c.isdigit()):
             buffer += c 
             c = next_char(assm)
-        if c =='\'':
+        if c =='\"':
             assm.constant_pool += [buffer]
             index = len(assm.constant_pool)
             assm.op_codes += [index]   
@@ -214,8 +220,9 @@ def string(assm):
 
 def decimal(assm):
     white_space(assm)
-
+ 
     if peek(assm) == '.':
+
         buffer = '0.'
         next_char(assm)
         c = next_char(assm)
@@ -227,6 +234,7 @@ def decimal(assm):
         index = len(assm.constant_pool)
         assm.op_codes += [index] 
         commit(assm)
+        return True
     elif peek(assm).isdigit():
         buffer = ''
         c = next_char(assm)
@@ -244,10 +252,22 @@ def decimal(assm):
         index = len(assm.constant_pool)
         assm.op_codes += [index] 
         commit(assm)
+        return True
+    return False
 
-    return True
-
-
+def instruction(assm):
+    if ipush(assm):
+        integer(assm)
+        return
+    elif iadd(assm):
+        return
+    elif isub(assm):
+        return
+    elif spush(assm):
+        string(assm)
+        return
+    elif halt(assm):
+        return
 
 # def label(assm):
 #     while True:
@@ -261,15 +281,24 @@ def decimal(assm):
       
 
 if __name__ == '__main__':
-    assm = Assembler("fpush 7.123 \n")
-
-    if fpush(assm):
-        if decimal(assm):
-            pass
+    assm = Assembler("""spush "hello" 
+                        ipush 56 
+                        iadd 
+                        isub
+                        halt
+                    """)
+#    if spush(assm):
+#        string(assm)
+    instruction(assm)
+    instruction(assm)
+    instruction(assm)
+    instruction(assm)
+    instruction(assm)
     print(assm.op_codes)
     print(assm.constant_pool)
     print(assm.start)
     print(assm.pos)
+    print(tail(assm))
 
         
 
