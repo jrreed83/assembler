@@ -66,6 +66,8 @@ def peek(assm):
     rewind(assm)
     return c
 
+def tail(assm):
+    return assm.input[assm.start:]
 
 def iconst0(assm): 
     to_match = 'iconst0'
@@ -139,6 +141,16 @@ def spush(assm):
         return True 
     return False
 
+def fpush(assm):
+    to_match = 'fpush'
+    assm.pos = assm.start + len(to_match)
+    if to_match == assm.input[assm.start:assm.pos]:
+        assm.op_codes += [FPUSH] 
+        assm.ip += 1   
+        assm.start = assm.pos               
+        return True 
+    return False
+
 def halt(assm): 
     white_space(assm)
     to_match = 'halt'
@@ -202,12 +214,37 @@ def string(assm):
 
 def decimal(assm):
     white_space(assm)
-    buffer = char_buffer(assm.input[assm.pos:])
-    assm.constant_pool += [float(buffer)]
-    index = len(assm.constant_pool)
-    assm.op_codes += [index] 
-    assm.pos += len(buffer)
-    assm.start = assm.pos       
+
+    if peek(assm) == '.':
+        buffer = '0.'
+        next_char(assm)
+        c = next_char(assm)
+        while c.isdigit():
+            buffer += c 
+            c = next_char(assm)
+        rewind(assm)
+        assm.constant_pool += [float(buffer)]
+        index = len(assm.constant_pool)
+        assm.op_codes += [index] 
+        commit(assm)
+    elif peek(assm).isdigit():
+        buffer = ''
+        c = next_char(assm)
+        while c.isdigit():
+            buffer += c 
+            c = next_char(assm)
+        if c == '.':
+            buffer += '.'
+            c = next_char(assm)
+            while c.isdigit():
+                buffer += c 
+                c = next_char(assm)            
+        rewind(assm)
+        assm.constant_pool += [float(buffer)]
+        index = len(assm.constant_pool)
+        assm.op_codes += [index] 
+        commit(assm)
+
     return True
 
 
@@ -224,10 +261,10 @@ def decimal(assm):
       
 
 if __name__ == '__main__':
-    assm = Assembler("ipush 1234 \n")
+    assm = Assembler("fpush 7.123 \n")
 
-    if ipush(assm):
-        if integer(assm):
+    if fpush(assm):
+        if decimal(assm):
             pass
     print(assm.op_codes)
     print(assm.constant_pool)
