@@ -72,6 +72,7 @@ def peek(assm):
 def tail(assm):
     return assm.input[assm.start:]
 
+
 def iconst0(assm): 
     white_space(assm)     
     to_match = 'iconst0'
@@ -183,8 +184,7 @@ def fpush(assm):
 def halt(assm): 
     white_space(assm)
     to_match = 'halt'
-    assm.pos = assm.start + len(to_match)
-    print(assm.input[assm.start:assm.pos])         
+    assm.pos = assm.start + len(to_match)      
     if to_match == assm.input[assm.start:assm.pos]:
         assm.op_codes += [HALT]
         assm.ip += 1     
@@ -274,21 +274,22 @@ def decimal(assm):
     return False
 
 def instruction(assm):
-    if ipush(assm):
+       
+    if ipush(assm):               
         integer(assm)
-        return 0
-    elif iadd(assm):
-        return 0
-    elif isub(assm):
-        return 0
-    elif spush(assm):
+        return 0         
+    if iadd(assm):
+        return 0   
+    if isub(assm):
+        return 0   
+    if spush(assm):
         string(assm)
         return 0
-    elif halt(assm):
+    if halt(assm):
         return 0
-    elif label(assm):
+    if label(assm):
         return 0
-    elif show(assm):
+    if show(assm):
         return 0
 
 def label(assm):
@@ -301,27 +302,21 @@ def label(assm):
         next_char(assm)
         ignore(assm)
         return True
+
+    assm.pos = assm.start
     return False
 
 if __name__ == '__main__':
-    assm = Assembler("""spush "hello" 
+    assm = Assembler("""show
+                        spush "hello"
+                        halt 
                         ipush 56
-                        foo: 
-                        iadd 
-                        isub
-                        halt
-                        show
-                        spush "world"
                     """)
 
-    instruction(assm)
-    instruction(assm)
-    instruction(assm)
-    instruction(assm)
-    instruction(assm)
-    instruction(assm)
-    instruction(assm)
-    instruction(assm)
+    print(instruction(assm))
+    print(instruction(assm))
+    print(instruction(assm))
+    print(instruction(assm))            
     print(assm.op_codes)
     print(assm.constants)
     print(assm.start)
