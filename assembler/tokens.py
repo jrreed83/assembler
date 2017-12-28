@@ -23,7 +23,8 @@ RESERVED = {
     'iconst1': ICONST1, 
     'iconst2': ICONST2,
     'ipush': IPUSH,
-    'show': SHOW,      
+    'show': SHOW,    
+    'spush': SPUSH  
 }
 
 class Assembler:
@@ -73,122 +74,13 @@ def tail(assm):
     return assm.input[assm.start:]
 
 
-def iconst0(assm): 
+def match(string, assm):
     white_space(assm)     
-    to_match = 'iconst0'
-    assm.pos = assm.start + len(to_match)
-    if to_match == assm.input[assm.start:assm.pos]:
-        assm.op_codes += [ICONST0]
-        assm.ip += 1
-        assm.start = assm.pos
-        return True
-    assm.pos = assm.start
-    return False
-
-def show(assm): 
-    white_space(assm)    
-    to_match = 'show'
-    assm.pos = assm.start + len(to_match)
-    if to_match == assm.input[assm.start:assm.pos]:
-        assm.op_codes += [SHOW]
-        assm.ip += 1
-        assm.start = assm.pos
-        return True
-    assm.pos = assm.start
-    return False
-
-def iconst1(assm): 
-    white_space(assm)     
-    to_match = 'iconst1'
-    assm.pos = assm.start + len(to_match)
-    if to_match == assm.input[assm.start:assm.pos]:
-        assm.op_codes += [ICONST1]
-        assm.ip += 1   
-        assm.start = assm.pos          
-        return True 
-    assm.pos = assm.start
-    return False
-
-def iconst2(assm): 
-    white_space(assm)     
-    to_match = 'iconst2'
-    assm.pos = assm.start + len(to_match)
-    if to_match == assm.input[assm.start:assm.pos]:
-        assm.op_codes += [ICONST2]
-        assm.ip += 1      
-        assm.start = assm.pos            
-        return True 
-    assm.pos = assm.start
-    return False
-
-def iadd(assm): 
-    white_space(assm)     
-    to_match = 'iadd'
-    assm.pos = assm.start + len(to_match)
-    if to_match == assm.input[assm.start:assm.pos]:
-        assm.op_codes += [IADD]
-        assm.ip += 1        
-        assm.start = assm.pos
-        return True 
-    assm.pos = assm.start
-    return False
-
-def isub(assm): 
-    white_space(assm)     
-    to_match = 'isub'
-    assm.pos = assm.start + len(to_match)   
-    if to_match == assm.input[assm.start:assm.pos]:
-        assm.op_codes += [ISUB]    
-        assm.ip += 1  
-        assm.start = assm.pos               
-        return True 
-    assm.pos = assm.start
-    return False
-
-def ipush(assm):
-    white_space(assm)     
-    to_match = 'ipush'
-    assm.pos = assm.start + len(to_match)    
-    if to_match == assm.input[assm.start:assm.pos]:
-        assm.op_codes += [IPUSH] 
+    assm.pos = assm.start + len(string)    
+    if string == assm.input[assm.start:assm.pos]:
+        assm.op_codes += [RESERVED[string]] 
         assm.ip += 1       
         assm.start = assm.pos           
-        return True 
-    assm.pos = assm.start
-    return False
-
-def spush(assm):
-    white_space(assm)     
-    to_match = 'spush'
-    assm.pos = assm.start + len(to_match)
-    if to_match == assm.input[assm.start:assm.pos]:
-        assm.op_codes += [SPUSH] 
-        assm.ip += 1   
-        assm.start = assm.pos               
-        return True 
-    assm.pos = assm.start
-    return False
-
-def fpush(assm):
-    white_space(assm)    
-    to_match = 'fpush'
-    assm.pos = assm.start + len(to_match)
-    if to_match == assm.input[assm.start:assm.pos]:
-        assm.op_codes += [FPUSH] 
-        assm.ip += 1   
-        assm.start = assm.pos               
-        return True 
-    assm.pos = assm.start
-    return False
-
-def halt(assm): 
-    white_space(assm)
-    to_match = 'halt'
-    assm.pos = assm.start + len(to_match)      
-    if to_match == assm.input[assm.start:assm.pos]:
-        assm.op_codes += [HALT]
-        assm.ip += 1     
-        assm.start = assm.pos             
         return True 
     assm.pos = assm.start
     return False
@@ -275,21 +167,21 @@ def decimal(assm):
 
 def instruction(assm):
        
-    if ipush(assm):               
+    if match('ipush', assm):               
         integer(assm)
         return 0         
-    if iadd(assm):
+    if match('iadd', assm):
         return 0   
-    if isub(assm):
+    if match('isub', assm):
         return 0   
-    if spush(assm):
+    if match('spush', assm):
         string(assm)
         return 0
-    if halt(assm):
+    if match('halt', assm):
         return 0
     if label(assm):
         return 0
-    if show(assm):
+    if match('show', assm):
         return 0
 
 def label(assm):
