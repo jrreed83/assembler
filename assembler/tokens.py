@@ -9,9 +9,9 @@ ICONST0 = 5
 ICONST1 = 6
 ICONST2 = 7
 IPUSH = 8
-PRINT = 9
+SHOW = 9
 FPUSH = 10
-SPUSH = 10
+SPUSH = 11
 
 RESERVED = {
     'nop': NOP,
@@ -23,7 +23,7 @@ RESERVED = {
     'iconst1': ICONST1, 
     'iconst2': ICONST2,
     'ipush': IPUSH,
-    'print': PRINT,      
+    'show': SHOW,      
 }
 
 class Assembler:
@@ -84,6 +84,18 @@ def iconst0(assm):
     assm.pos = assm.start
     return False
 
+def show(assm): 
+    white_space(assm)    
+    to_match = 'show'
+    assm.pos = assm.start + len(to_match)
+    if to_match == assm.input[assm.start:assm.pos]:
+        assm.op_codes += [SHOW]
+        assm.ip += 1
+        assm.start = assm.pos
+        return True
+    assm.pos = assm.start
+    return False
+
 def iconst1(assm): 
     white_space(assm)     
     to_match = 'iconst1'
@@ -123,7 +135,7 @@ def iadd(assm):
 def isub(assm): 
     white_space(assm)     
     to_match = 'isub'
-    assm.pos = assm.start + len(to_match)
+    assm.pos = assm.start + len(to_match)   
     if to_match == assm.input[assm.start:assm.pos]:
         assm.op_codes += [ISUB]    
         assm.ip += 1  
@@ -135,7 +147,7 @@ def isub(assm):
 def ipush(assm):
     white_space(assm)     
     to_match = 'ipush'
-    assm.pos = assm.start + len(to_match)
+    assm.pos = assm.start + len(to_match)    
     if to_match == assm.input[assm.start:assm.pos]:
         assm.op_codes += [IPUSH] 
         assm.ip += 1       
@@ -171,7 +183,8 @@ def fpush(assm):
 def halt(assm): 
     white_space(assm)
     to_match = 'halt'
-    assm.pos = assm.start + len(to_match)    
+    assm.pos = assm.start + len(to_match)
+    print(assm.input[assm.start:assm.pos])         
     if to_match == assm.input[assm.start:assm.pos]:
         assm.op_codes += [HALT]
         assm.ip += 1     
@@ -263,18 +276,20 @@ def decimal(assm):
 def instruction(assm):
     if ipush(assm):
         integer(assm)
-        return
+        return 0
     elif iadd(assm):
-        return
+        return 0
     elif isub(assm):
-        return
+        return 0
     elif spush(assm):
         string(assm)
-        return
+        return 0
     elif halt(assm):
-        return
+        return 0
     elif label(assm):
-        return
+        return 0
+    elif show(assm):
+        return 0
 
 def label(assm):
     white_space(assm)
@@ -292,11 +307,15 @@ if __name__ == '__main__':
     assm = Assembler("""spush "hello" 
                         ipush 56
                         foo: 
-                            iadd 
-                            isub
-                            halt
+                        iadd 
+                        isub
+                        halt
+                        show
+                        spush "world"
                     """)
 
+    instruction(assm)
+    instruction(assm)
     instruction(assm)
     instruction(assm)
     instruction(assm)
@@ -308,7 +327,7 @@ if __name__ == '__main__':
     print(assm.start)
     print(assm.pos)
     print(assm.labels)
-
+    print(tail(assm))
         
 
 
