@@ -26,7 +26,6 @@ RESERVED = {
     'print': PRINT,      
 }
 
-
 class Assembler:
     def __init__(self, input=''):
         self.reserved = {}
@@ -67,79 +66,87 @@ def peek(assm):
     rewind(assm)
     return c
 
-def at_front(to_match, assm):
-    assm.pos = assm.start + len(to_match)
-    if to_match == assm.input[assm.start:assm.pos]:
-        commit(assm)
-        return True
-    else:
-        rollback(assm)
-        return False
 
 def iconst0(assm): 
     to_match = 'iconst0'
-    if at_front(to_match, assm):
+    assm.pos = assm.start + len(to_match)
+    if to_match == assm.input[assm.start:assm.pos]:
         assm.op_codes += [ICONST0]
         assm.ip += 1
+        assm.start = assm.pos
         return True
     else:
         return False
 
 def iconst1(assm): 
     to_match = 'iconst1'
-    if at_front(to_match, assm):
+    assm.pos = assm.start + len(to_match)
+    if to_match == assm.input[assm.start:assm.pos]:
         assm.op_codes += [ICONST1]
-        assm.ip += 1        
+        assm.ip += 1   
+        assm.start = assm.pos          
         return True 
     else:
         return False
 
 def iconst2(assm): 
     to_match = 'iconst2'
-    if at_front(to_match, assm):
+    assm.pos = assm.start + len(to_match)
+    if to_match == assm.input[assm.start:assm.pos]:
         assm.op_codes += [ICONST2]
-        assm.ip += 1        
+        assm.ip += 1      
+        assm.start = assm.pos            
         return True 
     return False
 
 def iadd(assm): 
     to_match = 'iadd'
-    if at_front(to_match, assm):
+    assm.pos = assm.start + len(to_match)
+    if to_match == assm.input[assm.start:assm.pos]:
         assm.op_codes += [IADD]
         assm.ip += 1        
+        assm.start = assm.pos
         return True 
     return False
 
 def isub(assm): 
     to_match = 'isub'
-    if at_front(to_match, assm):
+    assm.pos = assm.start + len(to_match)
+    if to_match == assm.input[assm.start:assm.pos]:
         assm.op_codes += [ISUB]    
-        assm.ip += 1         
+        assm.ip += 1  
+        assm.start = assm.pos               
         return True 
     return False
 
 def ipush(assm):
     to_match = 'ipush'
-    if at_front(to_match, assm):
+    assm.pos = assm.start + len(to_match)
+    if to_match == assm.input[assm.start:assm.pos]:
         assm.op_codes += [IPUSH] 
-        assm.ip += 1        
+        assm.ip += 1       
+        assm.start = assm.pos           
         return True 
     return False
 
 def spush(assm):
     to_match = 'spush'
-    if at_front(to_match, assm):
+    assm.pos = assm.start + len(to_match)
+    if to_match == assm.input[assm.start:assm.pos]:
         assm.op_codes += [SPUSH] 
-        assm.ip += 1        
+        assm.ip += 1   
+        assm.start = assm.pos               
         return True 
     return False
 
 def halt(assm): 
     white_space(assm)
     to_match = 'halt'
-    if at_front(to_match, assm):
+    assm.pos = assm.start + len(to_match)    
+    if to_match == assm.input[assm.start:assm.pos]:
         assm.op_codes += [HALT]
-        assm.ip += 1        
+        assm.ip += 1     
+        assm.start = assm.pos             
         return True 
     return False
 
@@ -152,37 +159,55 @@ def white_space(assm):
     rewind(assm)
     assm.start = assm.pos
 
-def char_buffer(assm, term = lambda x: x.isspace()):
+def char_buffer(string, accept = lambda x: x.isalpha() or x.isdigit()):
+    for i,c in enumerate(string):
+        if not accept(c):
+            break
+    return string[:i]
+
+def integer(assm):
+    white_space(assm)
+
+    if not peek(assm).isdigit():
+        return False
+
     buffer = ''
     c = next_char(assm)
-    while not term(c):
-        buffer += c
+    buffer += c
+    while c.isdigit():
+        buffer += c 
         c = next_char(assm)
     rewind(assm)
-    return buffer 
-
-def iconst(assm):
-    white_space(assm)
-    buffer = char_buffer(assm)
     assm.op_codes += [int(buffer)]
-    assm.ip += 1    
+    commit(assm)
     return True
 
-def sconst(assm):
-    white_space(assm)
-    buffer = char_buffer(assm)
-    string = buffer[1:len(buffer)-1]
-    assm.constant_pool += [string]
-    index = len(assm.constant_pool)
-    assm.op_codes += [index]    
-    return True
 
-def fconst(assm):
+
+def string(assm):
     white_space(assm)
-    buffer = char_buffer(assm)
+    if next_char(assm) == '\'':
+        buffer = ''
+        c = next_char(assm)
+        while (c.isalpha() or c.isdigit()):
+            buffer += c 
+            c = next_char(assm)
+        if c =='\'':
+            assm.constant_pool += [buffer]
+            index = len(assm.constant_pool)
+            assm.op_codes += [index]   
+            commit(assm)     
+            return True
+    return False
+
+def decimal(assm):
+    white_space(assm)
+    buffer = char_buffer(assm.input[assm.pos:])
     assm.constant_pool += [float(buffer)]
     index = len(assm.constant_pool)
-    assm.op_codes += [index]    
+    assm.op_codes += [index] 
+    assm.pos += len(buffer)
+    assm.start = assm.pos       
     return True
 
 
@@ -199,10 +224,10 @@ def fconst(assm):
       
 
 if __name__ == '__main__':
-    assm = Assembler('spush \'hello\'\n')
+    assm = Assembler("ipush 1234 \n")
 
-    if spush(assm):
-        if sconst(assm):
+    if ipush(assm):
+        if integer(assm):
             pass
     print(assm.op_codes)
     print(assm.constant_pool)
