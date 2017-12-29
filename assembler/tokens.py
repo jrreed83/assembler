@@ -27,10 +27,6 @@ RESERVED = {
     'spush': SPUSH  
 }
 
-INSTRUCTION = 'instruction'
-INTEGER = 'integer'
-STRING = 'string'
-ERROR = 'error'
 
 class Assembler:
     def __init__(self, input=''):
@@ -86,7 +82,7 @@ def match(string, assm):
         assm.op_codes += [RESERVED[string]] 
         assm.ip += 1       
         assm.start = assm.pos           
-        return True 
+        return True
     assm.pos = assm.start
     return False
 
@@ -105,14 +101,14 @@ def white_space(assm):
 def integer(assm):
     white_space(assm)
     if not peek(assm).isdigit():
-        return ERROR
+        return False
 
     while next_char(assm).isdigit():
         pass
     rewind(assm)
     assm.op_codes += [int(assm.input[assm.start:assm.pos])]
     assm.start = assm.pos
-    return INSTRUCTION
+    return True
 
 def string(assm):
     white_space(assm)
@@ -130,8 +126,8 @@ def string(assm):
             next_char(assm)
             next_char(assm)
             ignore(assm)
-            return INSTRUCTION
-    return ERROR
+            return True
+    return False
 
 def decimal(assm):
     white_space(assm)
@@ -149,7 +145,7 @@ def decimal(assm):
         index = len(assm.constants)
         assm.op_codes += [index] 
         assm.start = assm.pos
-        return INSTRUCTION
+        return True
 
     elif peek(assm).isdigit():
         buffer = ''
@@ -168,44 +164,39 @@ def decimal(assm):
         index = len(assm.constants)
         assm.op_codes += [index] 
         assm.start = assm.pos
-        return INSTRUCTION
-    return ERROR
+        return True
+    return False
 
 def compile(assm):
     state = INSTRUCTION
     while assm.pos < len(assm.input):
-        if state == INSTRUCTION:
-            state = instruction(assm)
-        elif state == INTEGER:
-            state = integer(assm)
-        elif state == STRING:
-            state = string(assm)
-        elif state == ERROR:
-            print('ERROR')
-            break
+        instruction(assm)
+
         if tail(assm).isspace():
             break
 
-def instruction(assm):
-    state = INSTRUCTION
-    if match('ipush', assm):               
-        state = INTEGER         
-    elif match('iadd', assm):
-        state = INSTRUCTION
-    elif match('isub', assm):
-        state = INSTRUCTION   
-    elif match('spush', assm):
-        state = INSTRUCTION
-    elif match('halt', assm):
-        state = INSTRUCTION
-    elif label(assm):
-        state = INSTRUCTION
-    elif match('print', assm):
-        state = INSTRUCTION
-    elif match('halt', assm):
-        state = INSTRUCTION
-    return state 
 
+def instruction(assm):
+    if match('ipush', assm):               
+        integer(assm)         
+    elif match('iadd', assm):
+        pass
+    elif match('isub', assm):
+        pass   
+    elif match('imul', assm):
+        pass
+    elif match('spush', assm):
+        string(assm)
+    elif match('halt', assm):
+        pass
+    elif label(assm):
+        pass
+    elif match('print', assm):
+        pass
+    elif match('halt', assm):
+        pass
+    else:
+        pass
 
 def label(assm):
     white_space(assm)
@@ -217,19 +208,24 @@ def label(assm):
         next_char(assm)
         ignore(assm)
         return True
-
     assm.pos = assm.start
     return False
 
 if __name__ == '__main__':
     assm = Assembler("""ipush 54
                         ipush 43 
+                        ipush 45
                         iadd 
+                        imul
+                        spush "hello"
                         halt
+                        print
                      """)
 
     compile(assm)
     print(assm.op_codes)
+    print(assm.constants)
+    print(assm.labels)
         
 
 
