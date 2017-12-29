@@ -168,35 +168,34 @@ def decimal(assm):
     return False
 
 def compile(assm):
-    state = INSTRUCTION
     while assm.pos < len(assm.input):
         instruction(assm)
-
         if tail(assm).isspace():
             break
 
-
 def instruction(assm):
     if match('ipush', assm):               
-        integer(assm)         
+        integer(assm)
+        return         
     elif match('iadd', assm):
-        pass
+        return
     elif match('isub', assm):
-        pass   
+        return
     elif match('imul', assm):
-        pass
+        return
     elif match('spush', assm):
         string(assm)
+        return
     elif match('halt', assm):
-        pass
+        return
     elif label(assm):
-        pass
+        return
     elif match('print', assm):
-        pass
+        return
     elif match('halt', assm):
-        pass
+        return
     else:
-        pass
+        return
 
 def label(assm):
     white_space(assm)
