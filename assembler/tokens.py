@@ -44,7 +44,7 @@ class Assembler:
         return '[{0}]'.format(self.pos)
 
 
-def next_char(lexer):
+def next_char(assm):
     if assm.pos >= len(assm.input):
         raise EOFError('There are no more characters')
     else:
@@ -167,11 +167,13 @@ def decimal(assm):
         return True
     return False
 
-def compile(assm):
+def assemble(source_code=''):
+    assm = Assembler(source_code)
     while assm.pos < len(assm.input):
         instruction(assm)
         if tail(assm).isspace():
             break
+    return assm
 
 def instruction(assm):
     if match('ipush', assm):               
@@ -210,21 +212,24 @@ def label(assm):
     assm.pos = assm.start
     return False
 
-if __name__ == '__main__':
-    assm = Assembler("""ipush 54
-                        ipush 43 
-                        ipush 45
-                        iadd 
-                        imul
-                        spush "hello"
-                        halt
-                        print
-                     """)
+def main():
+    src = """ipush 54
+             ipush 43
+             ipush 45
+             iadd 
+             imul
+             spush "hello"
+             halt
+             print
+          """
 
-    compile(assm)
-    print(assm.op_codes)
-    print(assm.constants)
-    print(assm.labels)
+    a = assemble(src)
+    print(a.op_codes)
+    print(a.constants)
+    print(a.labels)
+
+if __name__ == '__main__':
+    main()
         
 
 
