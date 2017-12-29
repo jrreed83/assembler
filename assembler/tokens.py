@@ -9,7 +9,7 @@ ICONST0 = 5
 ICONST1 = 6
 ICONST2 = 7
 IPUSH = 8
-SHOW = 9
+PRINT = 9
 FPUSH = 10
 SPUSH = 11
 
@@ -23,9 +23,14 @@ RESERVED = {
     'iconst1': ICONST1, 
     'iconst2': ICONST2,
     'ipush': IPUSH,
-    'show': SHOW,    
+    'print': PRINT,    
     'spush': SPUSH  
 }
+
+INSTRUCTION = 'instruction'
+INTEGER = 'integer'
+STRING = 'string'
+ERROR = 'error'
 
 class Assembler:
     def __init__(self, input=''):
@@ -96,18 +101,18 @@ def white_space(assm):
     rewind(assm)
     assm.start = assm.pos
 
+
 def integer(assm):
     white_space(assm)
-
     if not peek(assm).isdigit():
-        return False
+        return ERROR
 
     while next_char(assm).isdigit():
         pass
     rewind(assm)
     assm.op_codes += [int(assm.input[assm.start:assm.pos])]
     assm.start = assm.pos
-    return True
+    return INSTRUCTION
 
 def string(assm):
     white_space(assm)
@@ -125,8 +130,8 @@ def string(assm):
             next_char(assm)
             next_char(assm)
             ignore(assm)
-            return True
-    return False
+            return INSTRUCTION
+    return ERROR
 
 def decimal(assm):
     white_space(assm)
@@ -144,7 +149,8 @@ def decimal(assm):
         index = len(assm.constants)
         assm.op_codes += [index] 
         assm.start = assm.pos
-        return True
+        return INSTRUCTION
+
     elif peek(assm).isdigit():
         buffer = ''
         c = next_char(assm)
@@ -162,27 +168,44 @@ def decimal(assm):
         index = len(assm.constants)
         assm.op_codes += [index] 
         assm.start = assm.pos
-        return True
-    return False
+        return INSTRUCTION
+    return ERROR
+
+def compile(assm):
+    state = INSTRUCTION
+    while assm.pos < len(assm.input):
+        if state == INSTRUCTION:
+            state = instruction(assm)
+        elif state == INTEGER:
+            state = integer(assm)
+        elif state == STRING:
+            state = string(assm)
+        elif state == ERROR:
+            print('ERROR')
+            break
+        if tail(assm).isspace():
+            break
 
 def instruction(assm):
-       
+    state = INSTRUCTION
     if match('ipush', assm):               
-        integer(assm)
-        return 0         
-    if match('iadd', assm):
-        return 0   
-    if match('isub', assm):
-        return 0   
-    if match('spush', assm):
-        string(assm)
-        return 0
-    if match('halt', assm):
-        return 0
-    if label(assm):
-        return 0
-    if match('show', assm):
-        return 0
+        state = INTEGER         
+    elif match('iadd', assm):
+        state = INSTRUCTION
+    elif match('isub', assm):
+        state = INSTRUCTION   
+    elif match('spush', assm):
+        state = INSTRUCTION
+    elif match('halt', assm):
+        state = INSTRUCTION
+    elif label(assm):
+        state = INSTRUCTION
+    elif match('print', assm):
+        state = INSTRUCTION
+    elif match('halt', assm):
+        state = INSTRUCTION
+    return state 
+
 
 def label(assm):
     white_space(assm)
@@ -199,22 +222,14 @@ def label(assm):
     return False
 
 if __name__ == '__main__':
-    assm = Assembler("""show
-                        spush "hello"
-                        halt 
-                        ipush 56
-                    """)
+    assm = Assembler("""ipush 54
+                        ipush 43 
+                        iadd 
+                        halt
+                     """)
 
-    print(instruction(assm))
-    print(instruction(assm))
-    print(instruction(assm))
-    print(instruction(assm))            
+    compile(assm)
     print(assm.op_codes)
-    print(assm.constants)
-    print(assm.start)
-    print(assm.pos)
-    print(assm.labels)
-    print(tail(assm))
         
 
 
