@@ -12,6 +12,7 @@ IPUSH = 8
 PRINT = 9
 FPUSH = 10
 SPUSH = 11
+JUMP = 12 
 
 RESERVED = {
     'nop': NOP,
@@ -25,7 +26,8 @@ RESERVED = {
     'ipush': IPUSH,
     'print': PRINT,    
     'spush': SPUSH,
-    'fpush': FPUSH  
+    'fpush': FPUSH,  
+    'jump': JUMP
 }
 
 
@@ -47,7 +49,7 @@ class Assembler:
 
 def next_char(assm):
     if assm.pos >= len(assm.input):
-        raise EOFError('There are no more characters')
+        return '\0'
     else:
         c = assm.input[assm.pos]
         assm.pos += 1
@@ -107,10 +109,36 @@ def integer(assm):
     while next_char(assm).isdigit():
         pass
     rewind(assm)
-    assm.op_codes += [int(assm.input[assm.start:assm.pos])]
+    value = int(assm.input[assm.start:assm.pos])
+    b0 = (value >> 0 ) & 0xff
+    b1 = (value >> 8 ) & 0xff 
+    b2 = (value >> 16) & 0xff
+    b3 = (value >> 24) & 0xff 
+
+    assm.op_codes += [b0,b1,b2,b3]
     assm.start = assm.pos
-    assm.ip += 1
+    assm.ip += 4
     return True
+
+def string_with_quotes(assm):
+    white_space(assm)
+    if next_char(assm) == '\"':
+        ignore(assm)
+        c = next_char(assm)
+        while (c.isalpha() or c.isdigit()):
+            c = next_char(assm)
+        rewind(assm)
+        if c =='\"':
+            assm.constants += [assm.input[assm.start:assm.pos]]
+            index = len(assm.constants)
+            assm.op_codes += [index]   
+            assm.start = assm.pos   
+            next_char(assm)
+            next_char(assm)
+            ignore(assm)
+            assm.ip += 1
+            return True
+    return False
 
 def string(assm):
     white_space(assm)
@@ -194,7 +222,7 @@ def instruction(assm):
         if decimal(assm):
             return True
     elif match('spush', assm):
-        if string(assm):
+        if string_with_quotes(assm):
             return True
     elif match('halt', assm):
         return True
@@ -206,6 +234,9 @@ def instruction(assm):
         return True 
     elif match('iconst2', assm):
         return True
+    elif match('jump', assm):
+        if string(assm):
+            return True
     else:
         return False
 
@@ -231,14 +262,14 @@ def label(assm):
     return False
 
 def main():
-    src = """ipush 54
-             ipush 43
+    src = """ipush 540
+             ipush 4335
              ipush 45
              bar:
                 iadd 
                 imul
                 spush "hello"
-             foo:
+             foo: 
                 fpush 6.56
                 iconst2
                 print
