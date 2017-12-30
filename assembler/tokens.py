@@ -24,7 +24,8 @@ RESERVED = {
     'iconst2': ICONST2,
     'ipush': IPUSH,
     'print': PRINT,    
-    'spush': SPUSH  
+    'spush': SPUSH,
+    'fpush': FPUSH  
 }
 
 
@@ -189,6 +190,9 @@ def instruction(assm):
         return True
     elif match('imul', assm):
         return True
+    elif match('fpush', assm):
+        if decimal(assm):
+            return True
     elif match('spush', assm):
         if string(assm):
             return True
@@ -196,7 +200,11 @@ def instruction(assm):
         return True
     elif match('print', assm):
         return True
-    elif match('halt', assm):
+    elif match('iconst0', assm):
+        return True 
+    elif match('iconst1', assm):
+        return True 
+    elif match('iconst2', assm):
         return True
     else:
         return False
@@ -227,12 +235,14 @@ def main():
              ipush 43
              ipush 45
              bar:
-             iadd 
-             imul
-             spush "hello"
-             halt
+                iadd 
+                imul
+                spush "hello"
              foo:
-             print
+                fpush 6.56
+                iconst2
+                print
+            halt
           """
 
     a = assemble(src)
