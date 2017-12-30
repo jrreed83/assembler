@@ -108,6 +108,7 @@ def integer(assm):
     rewind(assm)
     assm.op_codes += [int(assm.input[assm.start:assm.pos])]
     assm.start = assm.pos
+    assm.ip += 1
     return True
 
 def string(assm):
@@ -126,6 +127,7 @@ def string(assm):
             next_char(assm)
             next_char(assm)
             ignore(assm)
+            assm.ip += 1
             return True
     return False
 
@@ -145,6 +147,7 @@ def decimal(assm):
         index = len(assm.constants)
         assm.op_codes += [index] 
         assm.start = assm.pos
+        assm.ip += 1
         return True
 
     elif peek(assm).isdigit():
@@ -164,40 +167,47 @@ def decimal(assm):
         index = len(assm.constants)
         assm.op_codes += [index] 
         assm.start = assm.pos
+        assm.ip += 1
         return True
     return False
 
 def assemble(source_code=''):
     assm = Assembler(source_code)
     while assm.pos < len(assm.input):
-        instruction(assm)
+        expression(assm)
         if tail(assm).isspace():
             break
     return assm
 
 def instruction(assm):
     if match('ipush', assm):               
-        integer(assm)
-        return         
+        if integer(assm):
+            return True         
     elif match('iadd', assm):
-        return
+        return True
     elif match('isub', assm):
-        return
+        return True
     elif match('imul', assm):
-        return
+        return True
     elif match('spush', assm):
-        string(assm)
-        return
+        if string(assm):
+            return True
     elif match('halt', assm):
-        return
-    elif label(assm):
-        return
+        return True
     elif match('print', assm):
-        return
+        return True
     elif match('halt', assm):
-        return
+        return True
     else:
-        return
+        return False
+
+def expression(assm):
+    if instruction(assm):
+        return True
+    elif label(assm):
+        return True    
+    else:
+        return False
 
 def label(assm):
     white_space(assm)
@@ -205,7 +215,7 @@ def label(assm):
         pass
     rewind(assm)
     if peek(assm) == ':':        
-        assm.labels[assm.input[assm.start:assm.pos]] = assm.line
+        assm.labels[assm.input[assm.start:assm.pos]] = assm.ip
         next_char(assm)
         ignore(assm)
         return True
@@ -216,10 +226,12 @@ def main():
     src = """ipush 54
              ipush 43
              ipush 45
+             bar:
              iadd 
              imul
              spush "hello"
              halt
+             foo:
              print
           """
 
