@@ -120,6 +120,14 @@ def integer(assm):
     assm.ip += 4
     return True
 
+def comment(assm):
+    white_space(assm)
+    if peek(assm) == ';':
+        while next_char(assm) != '\n':
+            pass
+        return True
+    return False
+
 def string_with_quotes(assm):
     white_space(assm)
     if next_char(assm) == '\"':
@@ -234,6 +242,8 @@ def expression(assm):
         return True
     elif label(assm):
         return True    
+    elif comment(assm):
+        return True
     else:
         return False
 
@@ -261,7 +271,7 @@ def main():
              foo: 
                 fpush 6.56
                 iconst2
-                print
+                print ; this is a test comment
             halt
           """
 
