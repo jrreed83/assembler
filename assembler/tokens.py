@@ -140,24 +140,16 @@ def string_with_quotes(assm):
             return True
     return False
 
-def string(assm):
+def label_ref(assm):
     white_space(assm)
-    if next_char(assm) == '\"':
-        ignore(assm)
+    c = peek(assm)
+    if c.isalpha():
         c = next_char(assm)
         while (c.isalpha() or c.isdigit()):
             c = next_char(assm)
-        rewind(assm)
-        if c =='\"':
-            assm.constants += [assm.input[assm.start:assm.pos]]
-            index = len(assm.constants)
-            assm.op_codes += [index]   
-            assm.start = assm.pos   
-            next_char(assm)
-            next_char(assm)
-            ignore(assm)
-            assm.ip += 1
-            return True
+        rewind(assm) 
+        assm.ip += 1
+        return True
     return False
 
 def decimal(assm):
@@ -234,9 +226,6 @@ def instruction(assm):
         return True 
     elif match('iconst2', assm):
         return True
-    elif match('jump', assm):
-        if string(assm):
-            return True
     else:
         return False
 
@@ -281,6 +270,8 @@ def main():
     print(a.constants)
     print(a.labels)
 
+    assm = Assembler("hello ;\n")
+    print(label_ref(assm))
 if __name__ == '__main__':
     main()
         
