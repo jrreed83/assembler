@@ -1,11 +1,5 @@
 from assembler.tokens import *
 
-def test_isub():
-    assm = Assembler('isub\n')
-    match('isub', assm)
-    assert assm.pos == 4
-    assert assm.ip == 1 
-    assert assm.code == [ISUB]
 
 def test_string():
     assert string(""" "hello" """) == [8, 'hello']

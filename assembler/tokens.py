@@ -89,6 +89,7 @@ def tail(assm):
     return assm.input[assm.start:]
 
 def reserved(keyword, string, start=0): 
+    start = space(string, start)    
     stop = start + len(keyword)    
     if keyword == string[start:stop]:
         if keyword in RESERVED.keys():
@@ -97,27 +98,6 @@ def reserved(keyword, string, start=0):
     stop = start 
     return [stop, None]
 
-def match(string, assm):
-    white_space(assm)     
-    assm.pos = assm.start + len(string)    
-    if string == assm.input[assm.start:assm.pos]:
-        assm.code += [RESERVED[string]] 
-        assm.ip += 1       
-        assm.start = assm.pos           
-        return True
-    assm.pos = assm.start
-    return False
-
-def white_space(assm):
-    c = next_char(assm)    
-    if c == '\n':
-        assm.line += 1
-    while c.isspace():
-        c = next_char(assm) 
-        if c == '\n':
-            assm.line += 1
-    rewind(assm)
-    assm.start = assm.pos
 
 def instruction_halt(assm):
     [stop, token] = reserved('halt', assm.input, assm.start)
@@ -132,6 +112,17 @@ def instruction_halt(assm):
 
 def instruction_iadd(assm):
     [stop, token] = reserved('iadd', assm.input, assm.start)
+    if token is None:
+        return False
+    
+    assm.start = stop
+    assm.pos = stop
+    assm.code += [token]
+    assm.ip += 1
+    return True 
+
+def instruction_imul(assm):
+    [stop, token] = reserved('imul', assm.input, assm.start)
     if token is None:
         return False
     
@@ -181,6 +172,21 @@ def instruction_spush(assm):
             return True 
     return False
 
+def instruction_fpush(assm):
+    start = assm.start
+    [stop, token1] = reserved('fpush', assm.input, assm.start)
+    if token1 is not None:
+        [stop, token2] = decimal(assm.input, stop)
+        if token2 is not None:
+            assm.code += [token1, assm.cp]
+            assm.constants += [token2]
+            assm.cp += 1
+            assm.start = stop
+            assm.pos = stop 
+            assm.ip += 2
+            return True 
+    return False
+
 def instruction_iconst0(assm):
     [stop, token] = reserved('iconst0', assm.input, assm.start)
     if token is None:
@@ -214,21 +220,6 @@ def instruction_iconst2(assm):
     assm.ip += 1
     return True  
 
-# def instruction_spush(assm):
-#     if reserved('spush', assm):
-#         commit(assm)
-#         if string_with_quotes(assm):
-#             return True
-#     rollback(assm)
-#     return False 
-
-# def instruction_fpush(assm):
-#     if reserved('fpush', assm):
-#         commit(assm)
-#         if decimal(assm):
-#             return True
-#     rollback(assm)
-#     return False 
 
 def instruction_print(assm):
     [stop, token] = reserved('print', assm.input, assm.start)
@@ -319,45 +310,18 @@ def label_ref(assm):
         return True
     return False
 
-def decimal(assm):
-    white_space(assm)
- 
-    if peek(assm) == '.':
+def decimal(string, start = 0):
+    ptr = space(string, start)
 
-        buffer = '0.'
-        next_char(assm)
-        c = next_char(assm)
-        while c.isdigit():
-            buffer += c 
-            c = next_char(assm)
-        rewind(assm)
-        assm.constants += [float(buffer)]
-        index = len(assm.constants)
-        assm.code += [index] 
-        assm.start = assm.pos
-        assm.ip += 1
-        return True
+    if not string[ptr].isdigit():
+        return [ptr, None]
 
-    elif peek(assm).isdigit():
-        buffer = ''
-        c = next_char(assm)
-        while c.isdigit():
-            buffer += c 
-            c = next_char(assm)
-        if c == '.':
-            buffer += '.'
-            c = next_char(assm)
-            while c.isdigit():
-                buffer += c 
-                c = next_char(assm)            
-        rewind(assm)
-        assm.constants += [float(buffer)]
-        index = len(assm.constants)
-        assm.code += [index] 
-        assm.start = assm.pos
-        assm.ip += 1
-        return True
-    return False
+    while string[ptr].isdigit():
+        ptr += 1 
+
+    value = float(string[start:ptr])
+
+    return [ptr, value]
 
 def assemble(source_code=''):
     assm = Assembler(source_code)
@@ -368,30 +332,27 @@ def assemble(source_code=''):
     return assm
 
 def instruction(assm):
-    if match('ipush', assm):               
-        if integer(assm):
-            return True         
-    elif match('iadd', assm):
-        return True
-    elif match('isub', assm):
-        return True
-    elif match('imul', assm):
-        return True
-    elif match('fpush', assm):
-        if decimal(assm):
-            return True
-    elif match('spush', assm):
-        if string_with_quotes(assm):
-            return True
-    elif match('halt', assm):
-        return True
-    elif match('print', assm):
-        return True
-    elif match('iconst0', assm):
+    if instruction_ipush(assm):
         return True 
-    elif match('iconst1', assm):
-        return True 
-    elif match('iconst2', assm):
+    elif instruction_iadd(assm):
+        return True
+    elif instruction_isub(assm):
+        return True
+    elif instruction_imul(assm):
+        return True
+    elif instruction_fpush(assm):
+        return True
+    elif instruction_spush(assm):
+        return True
+    elif instruction_halt(assm):
+        return True
+    elif instruction_print(assm):
+        return True
+    elif instruction_iconst0(assm):
+        return True
+    elif instruction_iconst1(assm):
+        return True
+    elif instruction_iconst2(assm):
         return True
     else:
         return False
@@ -399,10 +360,10 @@ def instruction(assm):
 def expression(assm):
     if instruction(assm):
         return True
-    elif label(assm):
-        return True    
-    elif comment(assm):
-        return True
+    #elif label(assm):
+    #    return True    
+    #elif comment(assm):
+    #    return True
     else:
         return False
 
@@ -423,15 +384,6 @@ def main():
     src = """ipush 540
              ipush 4335
              ipush 45
-             bar:
-                iadd 
-                imul
-                spush "hello"
-             foo: 
-                fpush 6.56
-                iconst2
-                print ; this is a test comment
-            halt
           """
 
     a = assemble(src)
@@ -440,7 +392,7 @@ def main():
     print(a.labels)
 
     assm = Assembler("hello ;\n")
-    print(label_ref(assm))
+
 if __name__ == '__main__':
     main()
         
