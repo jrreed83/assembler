@@ -37,8 +37,9 @@ class Assembler:
         self.pos = 0
         self.start = 0
         self.input = input
+        self.markers = []
         self.line = 0
-        self.op_codes = []
+        self.code = []
         self.constants = []
         self.labels = {}
         self.ip = 0
@@ -59,13 +60,21 @@ def rewind(assm):
     assm.pos -= 1 
 
 def rollback(assm):
-    assm.pos = assm.start 
+    assm.pos = assm.markers[0]['pos']
+    assm.start = assm.markers[0]['start']
+    assm.markers = []
 
 def commit(assm):
     string = assm.input[assm.start:assm.pos]
-    assm.op_codes += [RESERVED[string]]
+    assm.code += [RESERVED[string]]
     assm.ip += 1
-    assm.start = assm.pos 
+    assm.start = assm.pos
+    assm.markers = [] 
+
+def mark(assm, data=[]):
+    marker = {'start': assm.start, 'pos': assm.pos, 'data': data}
+    assm.markers += [marker]
+
 
 def ignore(assm):
     assm.start = assm.pos 
@@ -78,10 +87,13 @@ def peek(assm):
 def tail(assm):
     return assm.input[assm.start:]
 
-def match_(string, assm):
+def reserved(keyword, assm):
     white_space(assm)     
-    assm.pos = assm.start + len(string)    
-    if string == assm.input[assm.start:assm.pos]:
+    assm.pos = assm.start + len(keyword)    
+    if keyword == assm.input[assm.start:assm.pos]:
+        if keyword in RESERVED.keys():
+            data = RESERVED[keyword]
+            mark(assm, data)
         return True
     return False
 
@@ -89,7 +101,7 @@ def match(string, assm):
     white_space(assm)     
     assm.pos = assm.start + len(string)    
     if string == assm.input[assm.start:assm.pos]:
-        assm.op_codes += [RESERVED[string]] 
+        assm.code += [RESERVED[string]] 
         assm.ip += 1       
         assm.start = assm.pos           
         return True
@@ -108,28 +120,28 @@ def white_space(assm):
     assm.start = assm.pos
 
 def instruction_halt(assm):
-    if match_('halt', assm):
+    if reserved('halt', assm):
         commit(assm)
         return True
     rollback(assm)
     return False 
 
 def instruction_iadd(assm):
-    if match_('iadd', assm):
+    if reserved('iadd', assm):
         commit(assm)
         return True
     rollback(assm)
     return False 
 
 def instruction_isub(assm):
-    if match_('iadd', assm):
+    if reserved('iadd', assm):
         commit(assm)
         return True
     rollback(assm)
     return False 
 
 def instruction_ipush(assm):
-    if match_('ipush', assm):
+    if reserved('ipush', assm):
         commit(assm)
         if integer(assm):
             return True
@@ -137,28 +149,28 @@ def instruction_ipush(assm):
     return False 
 
 def instruction_iconst0(assm):
-    if match_('iconst0', assm):
+    if reserved('iconst0', assm):
         commit(assm)
         return True
     rollback(assm)
     return False  
 
 def instruction_iconst1(assm):
-    if match_('iconst1', assm):
+    if reserved('iconst1', assm):
         commit(assm)
         return True
     rollback(assm)
     return False  
 
 def instruction_iconst2(assm):
-    if match_('iconst2', assm):
+    if reserved('iconst2', assm):
         commit(assm)
         return True
     rollback(assm)
     return False  
 
 def instruction_spush(assm):
-    if match_('spush', assm):
+    if reserved('spush', assm):
         commit(assm)
         if string_with_quotes(assm):
             return True
@@ -166,7 +178,7 @@ def instruction_spush(assm):
     return False 
 
 def instruction_fpush(assm):
-    if match_('fpush', assm):
+    if reserved('fpush', assm):
         commit(assm)
         if decimal(assm):
             return True
@@ -174,7 +186,7 @@ def instruction_fpush(assm):
     return False 
 
 def instruction_print(assm):
-    if match_('print', assm):
+    if reserved('print', assm):
         commit(assm)
         return True
     rollback(assm)
@@ -194,7 +206,7 @@ def integer(assm):
     b2 = (value >> 16) & 0xff
     b3 = (value >> 24) & 0xff 
 
-    assm.op_codes += [b0,b1,b2,b3]
+    assm.code += [b0,b1,b2,b3]
     assm.start = assm.pos
     assm.ip += 4
     return True
@@ -218,7 +230,7 @@ def string_with_quotes(assm):
         if c =='\"':
             assm.constants += [assm.input[assm.start:assm.pos]]
             index = len(assm.constants)
-            assm.op_codes += [index]   
+            assm.code += [index]   
             assm.start = assm.pos   
             next_char(assm)
             next_char(assm)
@@ -253,7 +265,7 @@ def decimal(assm):
         rewind(assm)
         assm.constants += [float(buffer)]
         index = len(assm.constants)
-        assm.op_codes += [index] 
+        assm.code += [index] 
         assm.start = assm.pos
         assm.ip += 1
         return True
@@ -273,7 +285,7 @@ def decimal(assm):
         rewind(assm)
         assm.constants += [float(buffer)]
         index = len(assm.constants)
-        assm.op_codes += [index] 
+        assm.code += [index] 
         assm.start = assm.pos
         assm.ip += 1
         return True
@@ -355,7 +367,7 @@ def main():
           """
 
     a = assemble(src)
-    print(a.op_codes)
+    print(a.code)
     print(a.constants)
     print(a.labels)
 
