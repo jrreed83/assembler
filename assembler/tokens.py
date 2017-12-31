@@ -42,7 +42,8 @@ class Assembler:
         self.code = []
         self.constants = []
         self.labels = {}
-        self.ip = 0
+        self.ip = 0 # instruction pointer
+        self.cp = 0 # constant pointer
 
     def __repr__(self):
         return '[{0}]'.format(self.pos)
@@ -171,9 +172,9 @@ def instruction_spush(assm):
     if token1 is not None:
         [stop, token2] = string(assm.input, stop)
         if token2 is not None:
-            index = len(assm.constants)            
+            assm.code += [token1, assm.cp]
             assm.constants += [token2]
-            assm.code += [token1, index]   
+            assm.cp += 1
             assm.start = stop
             assm.pos = stop 
             assm.ip += 2

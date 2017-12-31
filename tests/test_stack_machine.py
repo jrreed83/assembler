@@ -41,6 +41,7 @@ def test_instruction_spush():
     assert assm.ip == 2 
     assert assm.code == [SPUSH, 0]
     assert assm.constants == ['hello']
+    assert assm.cp == 1 
 
 def test_instruction_print():
     assm = Assembler('print\n')
