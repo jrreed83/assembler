@@ -62,7 +62,8 @@ def rollback(assm):
     assm.pos = assm.start 
 
 def commit(assm):
-    assm.op_codes += [assm.input[assm.start:assm.pos]]
+    string = assm.input[assm.start:assm.pos]
+    assm.op_codes += [RESERVED[string]]
     assm.ip += 1
     assm.start = assm.pos 
 
@@ -77,6 +78,12 @@ def peek(assm):
 def tail(assm):
     return assm.input[assm.start:]
 
+def match_(string, assm):
+    white_space(assm)     
+    assm.pos = assm.start + len(string)    
+    if string == assm.input[assm.start:assm.pos]:
+        return True
+    return False
 
 def match(string, assm):
     white_space(assm)     
@@ -100,6 +107,78 @@ def white_space(assm):
     rewind(assm)
     assm.start = assm.pos
 
+def instruction_halt(assm):
+    if match_('halt', assm):
+        commit(assm)
+        return True
+    rollback(assm)
+    return False 
+
+def instruction_iadd(assm):
+    if match_('iadd', assm):
+        commit(assm)
+        return True
+    rollback(assm)
+    return False 
+
+def instruction_isub(assm):
+    if match_('iadd', assm):
+        commit(assm)
+        return True
+    rollback(assm)
+    return False 
+
+def instruction_ipush(assm):
+    if match_('ipush', assm):
+        commit(assm)
+        if integer(assm):
+            return True
+    rollback(assm)
+    return False 
+
+def instruction_iconst0(assm):
+    if match_('iconst0', assm):
+        commit(assm)
+        return True
+    rollback(assm)
+    return False  
+
+def instruction_iconst1(assm):
+    if match_('iconst1', assm):
+        commit(assm)
+        return True
+    rollback(assm)
+    return False  
+
+def instruction_iconst2(assm):
+    if match_('iconst2', assm):
+        commit(assm)
+        return True
+    rollback(assm)
+    return False  
+
+def instruction_spush(assm):
+    if match_('spush', assm):
+        commit(assm)
+        if string_with_quotes(assm):
+            return True
+    rollback(assm)
+    return False 
+
+def instruction_fpush(assm):
+    if match_('fpush', assm):
+        commit(assm)
+        if decimal(assm):
+            return True
+    rollback(assm)
+    return False 
+
+def instruction_print(assm):
+    if match_('print', assm):
+        commit(assm)
+        return True
+    rollback(assm)
+    return False 
 
 def integer(assm):
     white_space(assm)
