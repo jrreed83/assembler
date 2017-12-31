@@ -71,8 +71,8 @@ def commit(assm):
     assm.start = assm.pos
     assm.markers = [] 
 
-def mark(assm, data=[]):
-    marker = {'start': assm.start, 'pos': assm.pos, 'data': data}
+def mark(assm, start=0, pos=0, data=[]):
+    marker = {'start': start, 'pos': pos, 'data': data}
     assm.markers += [marker]
 
 
@@ -87,15 +87,14 @@ def peek(assm):
 def tail(assm):
     return assm.input[assm.start:]
 
-def reserved(keyword, assm):
-    white_space(assm)     
-    assm.pos = assm.start + len(keyword)    
-    if keyword == assm.input[assm.start:assm.pos]:
+def reserved(keyword, string, start=0): 
+    stop = start + len(keyword)    
+    if keyword == string[start:stop]:
         if keyword in RESERVED.keys():
-            data = RESERVED[keyword]
-            mark(assm, data)
-        return True
-    return False
+            token = RESERVED[keyword]
+            return [stop, token]
+    stop = start 
+    return [stop, None]
 
 def match(string, assm):
     white_space(assm)     
@@ -120,77 +119,105 @@ def white_space(assm):
     assm.start = assm.pos
 
 def instruction_halt(assm):
-    if reserved('halt', assm):
-        commit(assm)
-        return True
-    rollback(assm)
-    return False 
+    [stop, token] = reserved('halt', assm.input, assm.start)
+    if token is None:
+        return False
+    
+    assm.start = stop
+    assm.pos = stop
+    assm.code += [token]
+    assm.ip += 1
+    return True 
 
 def instruction_iadd(assm):
-    if reserved('iadd', assm):
-        commit(assm)
-        return True
-    rollback(assm)
-    return False 
+    [stop, token] = reserved('iadd', assm.input, assm.start)
+    if token is None:
+        return False
+    
+    assm.start = stop
+    assm.pos = stop
+    assm.code += [token]
+    assm.ip += 1
+    return True 
 
 def instruction_isub(assm):
-    if reserved('iadd', assm):
-        commit(assm)
-        return True
-    rollback(assm)
-    return False 
+    [stop, token] = reserved('isub', assm.input, assm.start)
+    if token is None:
+        return False
+    
+    assm.start = stop
+    assm.pos = stop
+    assm.code += [token]
+    assm.ip += 1
+    return True 
 
-def instruction_ipush(assm):
-    if reserved('ipush', assm):
-        commit(assm)
-        if integer(assm):
-            return True
-    rollback(assm)
-    return False 
+# def instruction_ipush(assm):
+#     if reserved('ipush', assm):
+#         commit(assm)
+#         if integer(assm):
+#             return True
+#     rollback(assm)
+#     return False 
 
 def instruction_iconst0(assm):
-    if reserved('iconst0', assm):
-        commit(assm)
-        return True
-    rollback(assm)
-    return False  
+    [stop, token] = reserved('iconst0', assm.input, assm.start)
+    if token is None:
+        return False
+    
+    assm.start = stop
+    assm.pos = stop
+    assm.code += [token]
+    assm.ip += 1
+    return True 
 
 def instruction_iconst1(assm):
-    if reserved('iconst1', assm):
-        commit(assm)
-        return True
-    rollback(assm)
-    return False  
+    [stop, token] = reserved('iconst1', assm.input, assm.start)
+    if token is None:
+        return False
+    
+    assm.start = stop
+    assm.pos = stop
+    assm.code += [token]
+    assm.ip += 1
+    return True 
 
 def instruction_iconst2(assm):
-    if reserved('iconst2', assm):
-        commit(assm)
-        return True
-    rollback(assm)
-    return False  
+    [stop, token] = reserved('iconst2', assm.input, assm.start)
+    if token is None:
+        return False
+    
+    assm.start = stop
+    assm.pos = stop
+    assm.code += [token]
+    assm.ip += 1
+    return True  
 
-def instruction_spush(assm):
-    if reserved('spush', assm):
-        commit(assm)
-        if string_with_quotes(assm):
-            return True
-    rollback(assm)
-    return False 
+# def instruction_spush(assm):
+#     if reserved('spush', assm):
+#         commit(assm)
+#         if string_with_quotes(assm):
+#             return True
+#     rollback(assm)
+#     return False 
 
-def instruction_fpush(assm):
-    if reserved('fpush', assm):
-        commit(assm)
-        if decimal(assm):
-            return True
-    rollback(assm)
-    return False 
+# def instruction_fpush(assm):
+#     if reserved('fpush', assm):
+#         commit(assm)
+#         if decimal(assm):
+#             return True
+#     rollback(assm)
+#     return False 
 
 def instruction_print(assm):
-    if reserved('print', assm):
-        commit(assm)
-        return True
-    rollback(assm)
-    return False 
+    [stop, token] = reserved('print', assm.input, assm.start)
+    if token is None:
+        return False
+    
+    assm.start = stop
+    assm.pos = stop
+    assm.code += [token]
+    assm.ip += 1
+    return True 
 
 def integer(assm):
     white_space(assm)
