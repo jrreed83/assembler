@@ -384,14 +384,12 @@ def comment(assm):
     return False
 
 def main():
-    src = """ipush 540
-             foo:
-                ipush 4335
-                ipush 45 ; this is a comment
-             bar:
-                spush "hello"
-                fpush 5.0
-          """
+    src = """iconst1
+             iconst1
+             iadd
+             print
+             halt
+          """  
 
     a = assemble(src)
     print(a.code[0:a.ip])

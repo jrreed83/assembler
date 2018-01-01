@@ -30,7 +30,7 @@ def execute(cpu, instructions=[]):
     op = instructions[ip]
     while op != HALT:
         ip = ip + 1
-        elif op == IADD:
+        if op == IADD:
             x_1 = pop(op_stack)
             x_2 = pop(op_stack)
             push(op_stack, x_1+x_2)
@@ -49,4 +49,18 @@ def execute(cpu, instructions=[]):
         elif op == POP:
             pop(op_stack)
         op = instructions[ip]
+
+
+if __name__ == '__main__':
+    src = """iconst1
+             iconst1
+             iadd
+             print
+             halt
+          """  
+    a = assemble(src)
+    cpu = CPU()
+    execute(cpu, a.code)
+
+         
     
