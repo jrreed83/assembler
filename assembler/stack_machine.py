@@ -24,10 +24,10 @@ class CPU():
         self.ip = 0
         self.memory = {}
 
-def execute(cpu, instructions=[]):
+def execute(cpu, code=[]):
     ip = cpu.ip
     op_stack = cpu.op_stack
-    op = instructions[ip]
+    op = code[ip]
     while op != HALT:
         ip = ip + 1
         if op == IADD:
@@ -48,12 +48,20 @@ def execute(cpu, instructions=[]):
             print(pop(op_stack))
         elif op == POP:
             pop(op_stack)
-        op = instructions[ip]
+        elif op == IPUSH:
+            b0 = code[ip  ]
+            b1 = code[ip+1]
+            b2 = code[ip+2]
+            b3 = code[ip+3]
 
+            x = (b0 << 0) | (b1 << 8) | (b2 << 16) | (b3 << 24) 
+            push(op_stack, x)
+            ip += 4
+        op = code[ip]
 
 if __name__ == '__main__':
-    src = """iconst1
-             iconst1
+    src = """ipush 5
+             ipush 5
              iadd
              print
              halt
