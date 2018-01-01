@@ -2,14 +2,20 @@ from assembler.tokens import *
 
 
 def test_string():
-    assert string(""" "hello" """) == [8, 'hello']
+    assert quoted_string(""" "hello" """) == [8, 'hello']
 
 def test_comment():
-    string = '; this is a comment\n'
-    assm = Assembler('{0} next'.format(string))
+    x = '; this is a comment\n'
+    assm = Assembler('{0} next'.format(x))
     comment(assm)
     assert assm.ip == 0
-    assert assm.pos == len(string)
+    assert assm.pos == len(x)
+
+def test_label():
+    x = 'test:\n'
+    assm = Assembler(x)
+    label(assm)
+    assert assm.labels == {'test':0}
 
 def test_instruction_iadd():
     assm = Assembler('iadd\n')

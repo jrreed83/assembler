@@ -161,7 +161,7 @@ def instruction_spush(assm):
     start = assm.start
     [stop, token1] = reserved('spush', assm.input, assm.start)
     if token1 is not None:
-        [stop, token2] = string(assm.input, stop)
+        [stop, token2] = quoted_string(assm.input, stop)
         if token2 is not None:
             assm.code += [token1, assm.cp]
             assm.constants += [token2]
@@ -263,39 +263,45 @@ def comment(assm):
         return True
     return False
 
-def string_with_quotes(assm):
-    white_space(assm)
-    if next_char(assm) == '\"':
-        ignore(assm)
-        c = next_char(assm)
-        while (c.isalpha() or c.isdigit()):
-            c = next_char(assm)
-        rewind(assm)
-        if c =='\"':
-            assm.constants += [assm.input[assm.start:assm.pos]]
-            index = len(assm.constants)
-            assm.code += [index]   
-            assm.start = assm.pos   
-            next_char(assm)
-            next_char(assm)
-            ignore(assm)
-            assm.ip += 1
-            return True
-    return False
 
-def string(string, start=0):
-    ptr0 = space(string, start)
+def quote(string, start = 0):
+    ptr = space(string, start)
+    if string[ptr] == '\"':
+        return [ptr+1, '\"']
+    return [start, None]  
 
-    if string[ptr0] == '\"':
-        ptr0 += 1
-        ptr1 = ptr0
-        c = string[ptr1]
-        while (c.isalpha() or c.isdigit()):
-            ptr1 += 1
-            c = string[ptr1] 
-        if string[ptr1] == '\"':
-            ptr1 += 1
-            return [ptr1, string[ptr0: ptr1-1]]
+def colon(string, start = 0):
+    ptr = space(string, start)
+    if string[ptr] == ':':
+        return [ptr+1, ':']
+    return [start, None]  
+
+def semicolon(string, start = 0):
+    ptr = space(string, start)
+    if string[ptr] == ';':
+        return [ptr+1, ';']
+    return [start, None] 
+
+def quoted_string(input_string, start=0):
+    ptr = space(input_string, start)
+    [ptr, token] = quote(input_string, ptr)
+    if token is not None:
+        [ptr, token_] = string(input_string, ptr)
+        if token is not None:
+            [ptr, token] = quote(input_string, ptr)
+            return [ptr, token_]
+    return [start, None]
+
+def string(input_string, start=0):
+    ptr = space(input_string, start)
+    c = input_string[ptr]
+    if c.isalpha():
+        ptr += 1
+        c = input_string[ptr]
+        while c.isalpha() or c.isdigit():
+            ptr += 1
+            c = input_string[ptr]
+        return [ptr, input_string[start:ptr]]
     return [start, None]
 
 def label_ref(assm):
@@ -360,30 +366,40 @@ def instruction(assm):
 def expression(assm):
     if instruction(assm):
         return True
-    #elif label(assm):
-    #    return True    
+    elif label(assm):
+        return True    
     #elif comment(assm):
     #    return True
     else:
         return False
 
 def label(assm):
-    white_space(assm)
-    while next_char(assm).isalpha():
-        pass
-    rewind(assm)
-    if peek(assm) == ':':        
-        assm.labels[assm.input[assm.start:assm.pos]] = assm.ip
-        next_char(assm)
-        ignore(assm)
-        return True
-    assm.pos = assm.start
+    ptr = assm.start 
+    [ptr, token_] = string(assm.input, ptr)
+    if token_ is not None:
+        [ptr, token] = colon(assm.input, ptr)
+        if token is not None:
+            assm.labels[token_] = assm.ip
+            assm.start = ptr 
+            assm.pos = ptr
+            return True 
+    return False
+
+def comment(assm):
+    [ptr, token] = semicolon(assm.input, assm.start)
+    if token is not None:
+        while assm.input[ptr] != '\n':
+            ptr += 1
+        assm.start = ptr+1 
+        assm.pos = ptr+1
+        return True 
     return False
 
 def main():
     src = """ipush 540
              ipush 4335
              ipush 45
+             spush "hello"
           """
 
     a = assemble(src)
@@ -391,8 +407,9 @@ def main():
     print(a.constants)
     print(a.labels)
 
-    assm = Assembler("hello ;\n")
-
+    assm = Assembler("; this is a test dude\n")
+    comment(assm)
+    print(assm.pos)
 if __name__ == '__main__':
     main()
         
