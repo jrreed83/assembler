@@ -277,9 +277,16 @@ def colon(string, start = 0):
     return [start, None]  
 
 def semicolon(string, start = 0):
-    ptr = space(string, start)
+    start = space(string, start)
+    ptr = start
     if string[ptr] == ';':
         return [ptr+1, ';']
+    return [start, None] 
+
+def period(string, start = 0):
+    ptr = space(string, start)
+    if string[ptr] == '.':
+        return [ptr+1, '.']
     return [start, None] 
 
 def quoted_string(input_string, start=0):
@@ -293,7 +300,8 @@ def quoted_string(input_string, start=0):
     return [start, None]
 
 def string(input_string, start=0):
-    ptr = space(input_string, start)
+    start = space(input_string, start)
+    ptr = start
     c = input_string[ptr]
     if c.isalpha():
         ptr += 1
@@ -317,17 +325,17 @@ def label_ref(assm):
     return False
 
 def decimal(string, start = 0):
-    ptr = space(string, start)
-
-    if not string[ptr].isdigit():
-        return [ptr, None]
-
-    while string[ptr].isdigit():
-        ptr += 1 
-
-    value = float(string[start:ptr])
-
-    return [ptr, value]
+    start = space(string, start)
+    ptr = start 
+    d = string[ptr]
+    if d.isdigit():
+        [ptr, token] = integer(string, ptr)
+        if token is not None:
+            [ptr, token] = period(string,ptr)
+            if token is not None:    
+                [ptr, token] = integer(string, ptr)
+                return [ptr, float(string[start:ptr])]
+    return [start, None]
 
 def assemble(source_code=''):
     assm = Assembler(source_code)
@@ -368,8 +376,8 @@ def expression(assm):
         return True
     elif label(assm):
         return True    
-    #elif comment(assm):
-    #    return True
+    elif comment(assm):
+        return True
     else:
         return False
 
@@ -397,9 +405,12 @@ def comment(assm):
 
 def main():
     src = """ipush 540
-             ipush 4335
-             ipush 45
-             spush "hello"
+             foo:
+                ipush 4335
+                ipush 45 ; this is a comment
+             bar:
+                spush "hello"
+                fpush 5.0
           """
 
     a = assemble(src)
