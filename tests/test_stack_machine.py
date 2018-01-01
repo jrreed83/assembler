@@ -1,4 +1,4 @@
-from assembler.tokens import *
+from assembler.parser import *
 
 
 def test_string():
@@ -22,7 +22,7 @@ def test_instruction_iadd():
     instruction_iadd(assm)
     assert assm.pos == 4
     assert assm.ip == 1 
-    assert assm.code == [IADD]
+    assert assm.code[0:1] == [IADD]
 
 def test_integer():
     assert integer('235\n') == [3, [235, 0, 0, 0]]
@@ -32,14 +32,14 @@ def test_instruction_ipush():
     instruction_ipush(assm)
     assert assm.pos == 8
     assert assm.ip == 5 
-    assert assm.code == [IPUSH, 56, 0, 0, 0]
+    assert assm.code[0:5] == [IPUSH, 56, 0, 0, 0]
 
 def test_instruction_spush():
     assm = Assembler("""spush "hello"\n""")
     instruction_spush(assm)
     assert assm.pos == 13
     assert assm.ip == 2 
-    assert assm.code == [SPUSH, 0]
+    assert assm.code[0:2] == [SPUSH, 0]
     assert assm.constants == ['hello']
     assert assm.cp == 1 
 
@@ -48,4 +48,4 @@ def test_instruction_print():
     instruction_print(assm)
     assert assm.pos == 5
     assert assm.ip == 1 
-    assert assm.code == [PRINT]    
+    assert assm.code[0:1] == [PRINT]    

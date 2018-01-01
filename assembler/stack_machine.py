@@ -1,3 +1,5 @@
+from assembler.parser import * 
+
 class Stack():
     def __init__(self, size=256):
         self.array = [0] * size
@@ -16,18 +18,6 @@ def pop(stack):
 def peek(stack):
     return stack.array[stack.head]
 
-
-NOP = 0
-HALT = 1
-IADD = 2
-ISUB = 3
-IMUL = 4
-ICONST0 = 5
-ICONST1 = 6
-ICONST2 = 7
-PRINT = 8
-POP = 9
-
 class CPU():
     def __init__(self):
         self.op_stack = Stack()
@@ -40,8 +30,6 @@ def execute(cpu, instructions=[]):
     op = instructions[ip]
     while op != HALT:
         ip = ip + 1
-        if op == NOP:
-            pass
         elif op == IADD:
             x_1 = pop(op_stack)
             x_2 = pop(op_stack)

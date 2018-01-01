@@ -1,6 +1,5 @@
 import io
 
-NOP = 0
 HALT = 1
 IADD = 2
 ISUB = 3
@@ -13,9 +12,12 @@ PRINT = 9
 FPUSH = 10
 SPUSH = 11
 JUMP = 12 
+FADD = 13
+FMUL = 14
+FSUB = 15
+POP = 16
 
 RESERVED = {
-    'nop': NOP,
     'halt': HALT,
     'iadd': IADD,
     'isub': ISUB,
@@ -27,7 +29,11 @@ RESERVED = {
     'print': PRINT,    
     'spush': SPUSH,
     'fpush': FPUSH,  
-    'jump': JUMP
+    'jump': JUMP,
+    'fadd': FADD,
+    'fmul': FMUL,
+    'fsub': FSUB,
+    'pop': POP,
 }
 
 
@@ -37,9 +43,8 @@ class Assembler:
         self.pos = 0
         self.start = 0
         self.input = input
-        self.markers = []
         self.line = 0
-        self.code = []
+        self.code = [0] * 1000
         self.constants = []
         self.labels = {}
         self.ip = 0 # instruction pointer
@@ -49,44 +54,6 @@ class Assembler:
         return '[{0}]'.format(self.pos)
 
 
-def next_char(assm):
-    if assm.pos >= len(assm.input):
-        return '\0'
-    else:
-        c = assm.input[assm.pos]
-        assm.pos += 1
-        return c
-
-def rewind(assm):
-    assm.pos -= 1 
-
-def rollback(assm):
-    assm.pos = assm.markers[0]['pos']
-    assm.start = assm.markers[0]['start']
-    assm.markers = []
-
-def commit(assm):
-    string = assm.input[assm.start:assm.pos]
-    assm.code += [RESERVED[string]]
-    assm.ip += 1
-    assm.start = assm.pos
-    assm.markers = [] 
-
-def mark(assm, start=0, pos=0, data=[]):
-    marker = {'start': start, 'pos': pos, 'data': data}
-    assm.markers += [marker]
-
-
-def ignore(assm):
-    assm.start = assm.pos 
-
-def peek(assm):
-    c = next_char(assm)
-    rewind(assm)
-    return c
-
-def tail(assm):
-    return assm.input[assm.start:]
 
 def reserved(keyword, string, start=0): 
     start = space(string, start)    
@@ -106,7 +73,7 @@ def instruction_halt(assm):
     
     assm.start = stop
     assm.pos = stop
-    assm.code += [token]
+    assm.code[assm.ip] = token
     assm.ip += 1
     return True 
 
@@ -117,7 +84,7 @@ def instruction_iadd(assm):
     
     assm.start = stop
     assm.pos = stop
-    assm.code += [token]
+    assm.code[assm.ip] = token
     assm.ip += 1
     return True 
 
@@ -128,7 +95,7 @@ def instruction_imul(assm):
     
     assm.start = stop
     assm.pos = stop
-    assm.code += [token]
+    assm.code[assm.ip] = token
     assm.ip += 1
     return True 
 
@@ -139,7 +106,7 @@ def instruction_isub(assm):
     
     assm.start = stop
     assm.pos = stop
-    assm.code += [token]
+    assm.code[assm.ip] = token
     assm.ip += 1
     return True 
 
@@ -152,8 +119,10 @@ def instruction_ipush(assm):
             tokens = [token1] + token2
             assm.start = stop
             assm.pos = stop
-            assm.code += tokens
-            assm.ip += 5
+
+            for token in tokens:
+                assm.code[assm.ip] = token
+                assm.ip += 1           
             return True 
     return False
 
@@ -163,12 +132,18 @@ def instruction_spush(assm):
     if token1 is not None:
         [stop, token2] = quoted_string(assm.input, stop)
         if token2 is not None:
-            assm.code += [token1, assm.cp]
+
+            assm.code[assm.ip] = token1
+            assm.ip += 1 
+
+            assm.code[assm.ip] = assm.cp
+            assm.ip += 1 
+
             assm.constants += [token2]
             assm.cp += 1
             assm.start = stop
             assm.pos = stop 
-            assm.ip += 2
+
             return True 
     return False
 
@@ -178,12 +153,17 @@ def instruction_fpush(assm):
     if token1 is not None:
         [stop, token2] = decimal(assm.input, stop)
         if token2 is not None:
-            assm.code += [token1, assm.cp]
+            assm.code[assm.ip] = token1
+            assm.ip += 1 
+
+            assm.code[assm.ip] = assm.cp
+            assm.ip += 1 
+
             assm.constants += [token2]
             assm.cp += 1
             assm.start = stop
             assm.pos = stop 
-            assm.ip += 2
+        
             return True 
     return False
 
@@ -194,7 +174,7 @@ def instruction_iconst0(assm):
     
     assm.start = stop
     assm.pos = stop
-    assm.code += [token]
+    assm.code[assm.ip] = token
     assm.ip += 1
     return True 
 
@@ -205,7 +185,7 @@ def instruction_iconst1(assm):
     
     assm.start = stop
     assm.pos = stop
-    assm.code += [token]
+    assm.code[assm.ip] = token
     assm.ip += 1
     return True 
 
@@ -216,7 +196,7 @@ def instruction_iconst2(assm):
     
     assm.start = stop
     assm.pos = stop
-    assm.code += [token]
+    assm.code[assm.ip] = token
     assm.ip += 1
     return True  
 
@@ -228,7 +208,7 @@ def instruction_print(assm):
     
     assm.start = stop
     assm.pos = stop
-    assm.code += [token]
+    assm.code[assm.ip] = token
     assm.ip += 1
     return True 
 
@@ -341,7 +321,7 @@ def assemble(source_code=''):
     assm = Assembler(source_code)
     while assm.pos < len(assm.input):
         expression(assm)
-        if tail(assm).isspace():
+        if assm.input[assm.start:].isspace():
             break
     return assm
 
@@ -414,13 +394,11 @@ def main():
           """
 
     a = assemble(src)
-    print(a.code)
+    print(a.code[0:a.ip])
     print(a.constants)
     print(a.labels)
 
-    assm = Assembler("; this is a test dude\n")
-    comment(assm)
-    print(assm.pos)
+    print(a.start)
 if __name__ == '__main__':
     main()
         
