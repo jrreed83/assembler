@@ -423,6 +423,14 @@ def expression(assm):
     else:
         return False
 
+def label_(input_string, ptr):
+    [ptr, token_] = string(input_string, ptr)
+    if token_ is not None:
+        [ptr, token] = colon(input_string, ptr)
+        if token is not None:
+            return [ptr, token_]
+    return [ptr, None]
+
 def label(assm):
     ptr = assm.start 
     [ptr, token_] = string(assm.input, ptr)
@@ -434,6 +442,14 @@ def label(assm):
             assm.pos = ptr
             return True 
     return False
+
+def comment_(string, ptr):
+    [ptr, token] = semicolon(string, ptr)
+    if token is not None:
+        while string[ptr] != '\n':
+            ptr += 1
+        return [ptr, True]
+    return [ptr, None]
 
 def comment(assm):
     [ptr, token] = semicolon(assm.input, assm.start)
