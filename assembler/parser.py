@@ -53,7 +53,13 @@ class Assembler:
     def __repr__(self):
         return '[{0}]'.format(self.pos)
 
+class Result:
+    def __init__(self, ptr=0, token=None):
+        self.ptr = ptr 
+        self.token = token
 
+def is_successful(result):
+    return !(self.token == None) 
 
 def reserved(keyword, string, start=0): 
     start = space(string, start)    
@@ -384,6 +390,7 @@ def assemble(source_code=''):
         if assm.input[assm.start:].isspace():
             break
     return assm
+
 
 def instruction(assm):
     if instruction_ipush(assm):
