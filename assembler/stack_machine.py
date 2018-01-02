@@ -62,7 +62,15 @@ def execute(cpu):
             push(op_stack, x)
             ip += 4
         elif op == FPUSH:
-            pass
+            index = code[ip]
+            value = constants[index]
+            push(op_stack, value)
+            ip += 1
+        elif op == FADD:
+            x_1 = pop(op_stack)
+            x_2 = pop(op_stack)
+            push(op_stack, x_1+x_2)            
+            
         op = code[ip]
 
 if __name__ == '__main__':

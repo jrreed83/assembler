@@ -88,6 +88,17 @@ def instruction_iadd(assm):
     assm.ip += 1
     return True 
 
+def instruction_fadd(assm):
+    [stop, token] = reserved('fadd', assm.input, assm.start)
+    if token is None:
+        return False
+    
+    assm.start = stop
+    assm.pos = stop
+    assm.code[assm.ip] = token
+    assm.ip += 1
+    return True 
+
 def instruction_imul(assm):
     [stop, token] = reserved('imul', assm.input, assm.start)
     if token is None:
@@ -333,6 +344,8 @@ def instruction(assm):
         return True 
     elif instruction_iadd(assm):
         return True
+    elif instruction_fadd(assm):
+        return True    
     elif instruction_isub(assm):
         return True
     elif instruction_imul(assm):
