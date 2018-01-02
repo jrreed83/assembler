@@ -45,7 +45,7 @@ class Assembler:
         self.input = input
         self.line = 0
         self.code = [0] * 1000
-        self.constants = []
+        self.constants = [0] * 1000
         self.labels = {}
         self.ip = 0 # instruction pointer
         self.cp = 0 # constant pointer
@@ -139,8 +139,9 @@ def instruction_spush(assm):
             assm.code[assm.ip] = assm.cp
             assm.ip += 1 
 
-            assm.constants += [token2]
+            assm.constants[assm.cp] = token2
             assm.cp += 1
+
             assm.start = stop
             assm.pos = stop 
 
@@ -153,14 +154,16 @@ def instruction_fpush(assm):
     if token1 is not None:
         [stop, token2] = decimal(assm.input, stop)
         if token2 is not None:
+
             assm.code[assm.ip] = token1
             assm.ip += 1 
 
             assm.code[assm.ip] = assm.cp
             assm.ip += 1 
 
-            assm.constants += [token2]
+            assm.constants[assm.cp] = token2
             assm.cp += 1
+
             assm.start = stop
             assm.pos = stop 
         
@@ -386,6 +389,9 @@ def comment(assm):
 def main():
     src = """iconst1
              iconst1
+             fpush 5.65
+             fpush 4.23
+             spush "hello"
              iadd
              print
              halt
@@ -393,10 +399,7 @@ def main():
 
     a = assemble(src)
     print(a.code[0:a.ip])
-    print(a.constants)
-    print(a.labels)
-
-    print(a.start)
+    print(a.constants[0:a.cp])
 if __name__ == '__main__':
     main()
         

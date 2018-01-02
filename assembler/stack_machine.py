@@ -27,6 +27,8 @@ class CPU():
 def execute(cpu, code=[]):
     ip = cpu.ip
     op_stack = cpu.op_stack
+    constants = cpu.constants
+
     op = code[ip]
     while op != HALT:
         ip = ip + 1
@@ -57,6 +59,11 @@ def execute(cpu, code=[]):
             x = (b0 << 0) | (b1 << 8) | (b2 << 16) | (b3 << 24) 
             push(op_stack, x)
             ip += 4
+        elif op == FPUSH:
+            id_0 = constants[]
+            id_1 = constants[]
+            ip += 2
+            constants[] 
         op = code[ip]
 
 if __name__ == '__main__':
