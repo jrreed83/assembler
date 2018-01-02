@@ -19,15 +19,17 @@ def peek(stack):
     return stack.array[stack.head]
 
 class CPU():
-    def __init__(self):
+    def __init__(self, code=[], constants=[]):
         self.op_stack = Stack()
-        self.ip = 0
         self.memory = {}
+        self.code = code 
+        self.constants = constants
 
-def execute(cpu, code=[]):
-    ip = cpu.ip
+def execute(cpu):
+    ip = 0
     op_stack = cpu.op_stack
     constants = cpu.constants
+    code = cpu.code
 
     op = code[ip]
     while op != HALT:
@@ -60,10 +62,7 @@ def execute(cpu, code=[]):
             push(op_stack, x)
             ip += 4
         elif op == FPUSH:
-            id_0 = constants[]
-            id_1 = constants[]
-            ip += 2
-            constants[] 
+            pass
         op = code[ip]
 
 if __name__ == '__main__':
@@ -74,8 +73,8 @@ if __name__ == '__main__':
              halt
           """  
     a = assemble(src)
-    cpu = CPU()
-    execute(cpu, a.code)
+    cpu = CPU(code=a.code, constants=a.constants)
+    execute(cpu)
 
          
     
