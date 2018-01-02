@@ -65,6 +65,35 @@ def reserved(keyword, string, start=0):
     stop = start 
     return [stop, None]
 
+def instruction_halt_(string, ptr):
+    return reserved('halt', string, ptr)
+
+def instruction_iadd_(string, ptr):
+    return reserved('iadd', string, ptr)
+
+def instruction_isub_(string, ptr):
+    return reserved('isub', string, ptr)
+
+def instruction_imul_(string, ptr):
+    return reserved('imul', string, ptr)
+
+def instruction_print_(string, ptr):
+    return reserved('print', string, ptr)
+
+def instruction_halt_(string, ptr):
+    return reserved('halt', string, ptr)
+
+def instruction_pop_(string, ptr):
+    return reserved('pop', string, ptr)
+
+def instruction_fadd_(string, ptr):
+    return reserved('fadd', string, ptr)
+
+def instruction_fsub_(string, ptr):
+    return reserved('fsub', string, ptr)
+
+def instruction_fmul_(string, ptr):
+    return reserved('fmul', string, ptr)
 
 def instruction_halt(assm):
     [stop, token] = reserved('halt', assm.input, assm.start)
@@ -121,6 +150,15 @@ def instruction_isub(assm):
     assm.ip += 1
     return True 
 
+def instruction_ipush_(string, ptr):
+    [ptr1, token1] = reserved('ipush', string, ptr)
+    if token1 is not None:
+        [ptr2, token2] = integer(string, ptr1)
+        if token2 is not None:
+            tokens = [token1] + token2
+            return [ptr2, tokens] 
+    return [ptr, None]
+
 def instruction_ipush(assm):
     start = assm.start
     [stop, token1] = reserved('ipush', assm.input, assm.start)
@@ -136,6 +174,14 @@ def instruction_ipush(assm):
                 assm.ip += 1           
             return True 
     return False
+
+def instruction_spush_(string, ptr):
+    [ptr1, token1] = reserved('spush', string, ptr)
+    if token1 is not None:
+        [ptr2, token2] = quoted_string(string, ptr1)
+        if token2 is not None:
+            return [ptr2, token2]
+    return [ptr, None]
 
 def instruction_spush(assm):
     start = assm.start
