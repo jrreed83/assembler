@@ -1,4 +1,5 @@
 import io
+from collections import namedtuple
 
 HALT = 1
 IADD = 2
@@ -16,6 +17,10 @@ FADD = 13
 FMUL = 14
 FSUB = 15
 POP = 16
+
+
+Result = namedtuple('Result', ['ptr', 'tokens'])
+Token = namedtuple('Token', ['kind', 'value'])
 
 RESERVED = {
     'halt': HALT,
@@ -53,18 +58,9 @@ class Assembler:
     def __repr__(self):
         return '[{0}]'.format(self.pos)
 
-class Result:
-    def __init__(self, ptr=0, token=None):
-        self.ptr = ptr 
-        self.token = token
-    def __repr__(self):
-        return '({0}, {1})'.format(self.ptr, self.token)
-    
-    def __eq__(self, that):
-        return (self.ptr == that.ptr) and (self.token == that.token) 
 
 def is_successful(result):
-    return result.token != None 
+    return len(result.tokens) != 0
 
 
 def reserved(keyword, string, start=0): 
@@ -72,10 +68,10 @@ def reserved(keyword, string, start=0):
     stop = start + len(keyword)    
     if keyword == string[start:stop]:
         if keyword in RESERVED.keys():
-            token = RESERVED[keyword]
-            return Result(stop, token)#[stop, token]
+            data = RESERVED[keyword]
+            return Result(stop, [Token('reserved', data)])
     stop = start 
-    return Result(stop, None)#[stop, None]
+    return Result(stop, [])
 
 def instruction_halt(string, ptr):
     return reserved('halt', string, ptr)
@@ -165,16 +161,16 @@ def instruction(string, ptr):
 
     return Result(ptr, None)
 
-
-
 def instruction_ipush(string, ptr):
     result1 = reserved('ipush', string, ptr)
+    print(result1)    
     if is_successful(result1):
         result2 = integer(string, result1.ptr)
         if is_successful(result2):
-            tokens = [result1.token, result2.token]
-            return Result(result2.ptr, tokens)
-    return Result(ptr, None)
+            _, [tok1] = result1 
+            _, [tok2] = result2
+            return Result(result2.ptr, [tok1, tok2])
+    return Result(ptr, [])
 
 
 def instruction_spush(string, ptr):
@@ -182,8 +178,10 @@ def instruction_spush(string, ptr):
     if is_successful(result1):
         result2 = quoted_string(string, result1.ptr)
         if is_successful(result2):
-            return Result(result2.ptr, [result1.token, result2.token])
-    return Result(ptr, None)
+            _, [tok1] = result1 
+            _, [tok2] = result2
+            return Result(result2.ptr, [tok1, tok2])
+    return Result(ptr, [])
 
 
 def instruction_fpush(string, ptr):
@@ -191,8 +189,10 @@ def instruction_fpush(string, ptr):
     if is_successful(result1):
         result2 = decimal(string, result1.ptr)
         if is_successful(result2):
-            return Result(result2.ptr, [result1.token, result2.token])
-    return Result(ptr, None)
+            _, [tok1] = result1 
+            _, [tok2] = result2
+            return Result(result2.ptr, [tok1, tok2])
+    return Result(ptr, [])
 
 def space(string, start = 0):
     ptr = start
@@ -201,11 +201,9 @@ def space(string, start = 0):
     return ptr
 
 def integer(string, start=0):
-
     ptr = space(string, start)
-
     if not string[ptr].isdigit():
-        return Result(ptr, None)
+        return Result(ptr, [])
 
     while string[ptr].isdigit():
         ptr += 1 
@@ -215,15 +213,8 @@ def integer(string, start=0):
     #b1 = (value >> 8 ) & 0xff 
     #b2 = (value >> 16) & 0xff
     #b3 = (value >> 24) & 0xff 
-    return Result(ptr, value)
+    return Result(ptr, [Token('int', value)])
 
-def comment(assm):
-    white_space(assm)
-    if peek(assm) == ';':
-        while next_char(assm) != '\n':
-            pass
-        return True
-    return False
 
 def quote(string, start = 0):
     ptr = space(string, start)
@@ -258,8 +249,8 @@ def quoted_string(input_string, start=0):
         if is_successful(result2):
             result3 = quote(input_string, result2.ptr)
             if is_successful(result3):
-                return Result(result3.ptr, result2.token)
-    return Result(start, None)
+                return Result(result3.ptr, [result2.token])
+    return Result(start, [])
 
 def string(input_string, start=0):
     start = space(input_string, start)
@@ -271,7 +262,7 @@ def string(input_string, start=0):
         while c.isalpha() or c.isdigit():
             ptr += 1
             c = input_string[ptr]
-        return Result(ptr, input_string[start:ptr])
+        return Result(ptr, [Token('str', input_string[start:ptr])])
     return Result(start, None)
 
 def label_ref(assm):
@@ -297,8 +288,8 @@ def decimal(string, start = 0):
             if is_successful(result2):    
                 result3 = integer(string, result2.ptr)
                 if is_successful(result3):
-                    return Result(result3.ptr, float(string[start:result3.ptr]))
-    return Result(start, None)
+                    return Result(result3.ptr, [Token('flt',float(string[start:result3.ptr])])
+    return Result(start, [])
 
 def assemble(source_code=''):
     assm = Assembler(source_code)
@@ -308,6 +299,12 @@ def assemble(source_code=''):
             break
     return assm
 
+def commit(cpu, instruction):
+    ptr, token = instruction
+    if len(token) == 1:
+        cpu.code[cpu.ip] = token 
+        cpu.ip += 1    
+        return cpu
 
 def instruction(assm):
     if instruction_ipush(assm):
