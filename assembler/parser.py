@@ -172,7 +172,7 @@ def instruction_ipush(string, ptr):
     if is_successful(result1):
         result2 = integer(string, result1.ptr)
         if is_successful(result2):
-            tokens = [result1.token] + result2.token
+            tokens = [result1.token, result2.token]
             return Result(result2.ptr, tokens)
     return Result(ptr, None)
 
@@ -211,11 +211,11 @@ def integer(string, start=0):
         ptr += 1 
 
     value = int(string[start:ptr])
-    b0 = (value >> 0 ) & 0xff
-    b1 = (value >> 8 ) & 0xff 
-    b2 = (value >> 16) & 0xff
-    b3 = (value >> 24) & 0xff 
-    return Result(ptr, [b0, b1, b2, b3])
+    #b0 = (value >> 0 ) & 0xff
+    #b1 = (value >> 8 ) & 0xff 
+    #b2 = (value >> 16) & 0xff
+    #b3 = (value >> 24) & 0xff 
+    return Result(ptr, value)
 
 def comment(assm):
     white_space(assm)
