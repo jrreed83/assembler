@@ -57,9 +57,15 @@ class Result:
     def __init__(self, ptr=0, token=None):
         self.ptr = ptr 
         self.token = token
+    def __repr__(self):
+        return '({0}, {1})'.format(self.ptr, self.token)
+    
+    def __eq__(self, that):
+        return (self.ptr == that.ptr) and (self.token == that.token) 
 
 def is_successful(result):
     return result.token != None 
+
 
 def reserved(keyword, string, start=0): 
     start = space(string, start)    
@@ -67,268 +73,126 @@ def reserved(keyword, string, start=0):
     if keyword == string[start:stop]:
         if keyword in RESERVED.keys():
             token = RESERVED[keyword]
-            return [stop, token]
+            return Result(stop, token)#[stop, token]
     stop = start 
-    return [stop, None]
+    return Result(stop, None)#[stop, None]
 
-def instruction_halt_(string, ptr):
+def instruction_halt(string, ptr):
     return reserved('halt', string, ptr)
 
-def instruction_iadd_(string, ptr):
+def instruction_iadd(string, ptr):
     return reserved('iadd', string, ptr)
 
-def instruction_isub_(string, ptr):
+def instruction_isub(string, ptr):
     return reserved('isub', string, ptr)
 
-def instruction_imul_(string, ptr):
+def instruction_imul(string, ptr):
     return reserved('imul', string, ptr)
 
-def instruction_print_(string, ptr):
+def instruction_print(string, ptr):
     return reserved('print', string, ptr)
 
-def instruction_halt_(string, ptr):
-    return reserved('halt', string, ptr)
-
-def instruction_pop_(string, ptr):
+def instruction_pop(string, ptr):
     return reserved('pop', string, ptr)
 
-def instruction_fadd_(string, ptr):
+def instruction_fadd(string, ptr):
     return reserved('fadd', string, ptr)
 
-def instruction_fsub_(string, ptr):
+def instruction_fsub(string, ptr):
     return reserved('fsub', string, ptr)
 
-def instruction_fmul_(string, ptr):
+def instruction_fmul(string, ptr):
     return reserved('fmul', string, ptr)
 
-def instruction_(string, ptr):
+def instruction_iconst0(string, ptr):
+    return reserved('iconst0', string, ptr)
 
-    result = instruction_ipush_(string, ptr)
+def instruction_iconst1(string, ptr):
+    return reserved('iconst1', string, ptr)
+
+def instruction_iconst2(string, ptr):
+    return reserved('iconst2', string, ptr)
+
+def instruction(string, ptr):
+
+    result = instruction_ipush(string, ptr)
     if is_successful(result):
         return result
 
-    result = instruction_iadd_(string, ptr)
+    result = instruction_iadd(string, ptr)
     if is_successful(result):
         return result
 
-    result = instruction_fadd_(string, ptr)
+    result = instruction_fadd(string, ptr)
     if is_successful(result):
         return result
 
-    result = instruction_isub_(string, ptr)
+    result = instruction_isub(string, ptr)
     if is_successful(result):
         return result
 
-    result = instruction_imul_(string, ptr)
+    result = instruction_imul(string, ptr)
     if is_successful(result):
         return result
 
-    result = instruction_fpush_(string, ptr)
+    result = instruction_fpush(string, ptr)
     if is_successful(result):
         return result
 
-    result = instruction_spush_(string, ptr)
+    result = instruction_spush(string, ptr)
     if is_successful(result):
         return result
 
-    result = instruction_halt_(string, ptr)
+    result = instruction_halt(string, ptr)
     if is_successful(result):
         return result
 
-    result = instruction_print_(string, ptr)
+    result = instruction_print(string, ptr)
     if is_successful(result):
         return result
 
-    result = instruction_iconst0_(string, ptr)
+    result = instruction_iconst0(string, ptr)
     if is_successful(result):
         return result
 
-    result = instruction_iconst1_(string, ptr)
+    result = instruction_iconst1(string, ptr)
     if is_successful(result):
         return result
 
-    result = instruction_iconst2_(string, ptr)
+    result = instruction_iconst2(string, ptr)
     if is_successful(result):
         return result
 
-    return [ptr, None]
-
-def instruction_halt(assm):
-    [stop, token] = reserved('halt', assm.input, assm.start)
-    if token is None:
-        return False
-    
-    assm.start = stop
-    assm.pos = stop
-    assm.code[assm.ip] = token
-    assm.ip += 1
-    return True 
-
-def instruction_iadd(assm):
-    [stop, token] = reserved('iadd', assm.input, assm.start)
-    if token is None:
-        return False
-    
-    assm.start = stop
-    assm.pos = stop
-    assm.code[assm.ip] = token
-    assm.ip += 1
-    return True 
-
-def instruction_fadd(assm):
-    [stop, token] = reserved('fadd', assm.input, assm.start)
-    if token is None:
-        return False
-    
-    assm.start = stop
-    assm.pos = stop
-    assm.code[assm.ip] = token
-    assm.ip += 1
-    return True 
-
-def instruction_imul(assm):
-    [stop, token] = reserved('imul', assm.input, assm.start)
-    if token is None:
-        return False
-    
-    assm.start = stop
-    assm.pos = stop
-    assm.code[assm.ip] = token
-    assm.ip += 1
-    return True 
-
-def instruction_isub(assm):
-    [stop, token] = reserved('isub', assm.input, assm.start)
-    if token is None:
-        return False
-    
-    assm.start = stop
-    assm.pos = stop
-    assm.code[assm.ip] = token
-    assm.ip += 1
-    return True 
-
-def instruction_ipush_(string, ptr):
-    [ptr1, token1] = reserved('ipush', string, ptr)
-    if token1 is not None:
-        [ptr2, token2] = integer(string, ptr1)
-        if token2 is not None:
-            tokens = [token1] + token2
-            return [ptr2, tokens] 
-    return [ptr, None]
-
-def instruction_ipush(assm):
-    start = assm.start
-    [stop, token1] = reserved('ipush', assm.input, assm.start)
-    if token1 is not None:
-        [stop, token2] = integer(assm.input, stop)
-        if token2 is not None:
-            tokens = [token1] + token2
-            assm.start = stop
-            assm.pos = stop
-
-            for token in tokens:
-                assm.code[assm.ip] = token
-                assm.ip += 1           
-            return True 
-    return False
-
-def instruction_spush_(string, ptr):
-    [ptr1, token1] = reserved('spush', string, ptr)
-    if token1 is not None:
-        [ptr2, token2] = quoted_string(string, ptr1)
-        if token2 is not None:
-            return [ptr2, token2]
-    return [ptr, None]
-
-def instruction_spush(assm):
-    start = assm.start
-    [stop, token1] = reserved('spush', assm.input, assm.start)
-    if token1 is not None:
-        [stop, token2] = quoted_string(assm.input, stop)
-        if token2 is not None:
-
-            assm.code[assm.ip] = token1
-            assm.ip += 1 
-
-            assm.code[assm.ip] = assm.cp
-            assm.ip += 1 
-
-            assm.constants[assm.cp] = token2
-            assm.cp += 1
-
-            assm.start = stop
-            assm.pos = stop 
-
-            return True 
-    return False
-
-def instruction_fpush(assm):
-    start = assm.start
-    [stop, token1] = reserved('fpush', assm.input, assm.start)
-    if token1 is not None:
-        [stop, token2] = decimal(assm.input, stop)
-        if token2 is not None:
-
-            assm.code[assm.ip] = token1
-            assm.ip += 1 
-
-            assm.code[assm.ip] = assm.cp
-            assm.ip += 1 
-
-            assm.constants[assm.cp] = token2
-            assm.cp += 1
-
-            assm.start = stop
-            assm.pos = stop 
-        
-            return True 
-    return False
-
-def instruction_iconst0(assm):
-    [stop, token] = reserved('iconst0', assm.input, assm.start)
-    if token is None:
-        return False
-    
-    assm.start = stop
-    assm.pos = stop
-    assm.code[assm.ip] = token
-    assm.ip += 1
-    return True 
-
-def instruction_iconst1(assm):
-    [stop, token] = reserved('iconst1', assm.input, assm.start)
-    if token is None:
-        return False
-    
-    assm.start = stop
-    assm.pos = stop
-    assm.code[assm.ip] = token
-    assm.ip += 1
-    return True 
-
-def instruction_iconst2(assm):
-    [stop, token] = reserved('iconst2', assm.input, assm.start)
-    if token is None:
-        return False
-    
-    assm.start = stop
-    assm.pos = stop
-    assm.code[assm.ip] = token
-    assm.ip += 1
-    return True  
+    return Result(ptr, None)
 
 
-def instruction_print(assm):
-    [stop, token] = reserved('print', assm.input, assm.start)
-    if token is None:
-        return False
-    
-    assm.start = stop
-    assm.pos = stop
-    assm.code[assm.ip] = token
-    assm.ip += 1
-    return True 
+
+def instruction_ipush(string, ptr):
+    result1 = reserved('ipush', string, ptr)
+    if is_successful(result1):
+        result2 = integer(string, result1.ptr)
+        if is_successful(result2):
+            tokens = [result1.token] + result2.token
+            return Result(result2.ptr, tokens)
+    return Result(ptr, None)
+
+
+def instruction_spush(string, ptr):
+    result1 = reserved('spush', string, ptr)
+    if is_successful(result1):
+        result2 = quoted_string(string, result1.ptr)
+        if is_successful(result2):
+            return Result(result2.ptr, [result1.token, result2.token])
+    return Result(ptr, None)
+
+
+def instruction_fpush(string, ptr):
+    result1 = reserved('fpush', string, ptr)
+    if is_successful(result1):
+        result2 = decimal(string, result1.ptr)
+        if is_successful(result2):
+            return Result(result2.ptr, [result1.token, result2.token])
+    return Result(ptr, None)
 
 def space(string, start = 0):
     ptr = start
@@ -341,7 +205,7 @@ def integer(string, start=0):
     ptr = space(string, start)
 
     if not string[ptr].isdigit():
-        return [ptr, None]
+        return Result(ptr, None)
 
     while string[ptr].isdigit():
         ptr += 1 
@@ -351,7 +215,7 @@ def integer(string, start=0):
     b1 = (value >> 8 ) & 0xff 
     b2 = (value >> 16) & 0xff
     b3 = (value >> 24) & 0xff 
-    return [ptr, [b0, b1, b2, b3]]
+    return Result(ptr, [b0, b1, b2, b3])
 
 def comment(assm):
     white_space(assm)
@@ -361,41 +225,41 @@ def comment(assm):
         return True
     return False
 
-
 def quote(string, start = 0):
     ptr = space(string, start)
     if string[ptr] == '\"':
-        return [ptr+1, '\"']
-    return [start, None]  
+        return Result(ptr+1, '\"')
+    return Result(start, None)  
 
 def colon(string, start = 0):
     ptr = space(string, start)
     if string[ptr] == ':':
-        return [ptr+1, ':']
-    return [start, None]  
+        return Result(ptr+1, ':')
+    return Result(start, None)  
 
 def semicolon(string, start = 0):
     start = space(string, start)
     ptr = start
     if string[ptr] == ';':
-        return [ptr+1, ';']
-    return [start, None] 
+        return Result(ptr+1, ';')
+    return Result(start, None) 
 
 def period(string, start = 0):
     ptr = space(string, start)
     if string[ptr] == '.':
-        return [ptr+1, '.']
-    return [start, None] 
+        return Result(ptr+1, '.')
+    return Result(start, None) 
 
 def quoted_string(input_string, start=0):
     ptr = space(input_string, start)
-    [ptr, token] = quote(input_string, ptr)
-    if token is not None:
-        [ptr, token_] = string(input_string, ptr)
-        if token is not None:
-            [ptr, token] = quote(input_string, ptr)
-            return [ptr, token_]
-    return [start, None]
+    result1 = quote(input_string, ptr)
+    if is_successful(result1):
+        result2 = string(input_string, result1.ptr)
+        if is_successful(result2):
+            result3 = quote(input_string, result2.ptr)
+            if is_successful(result3):
+                return Result(result2.ptr, result2.token)
+    return Result(start, None)
 
 def string(input_string, start=0):
     start = space(input_string, start)
@@ -407,8 +271,8 @@ def string(input_string, start=0):
         while c.isalpha() or c.isdigit():
             ptr += 1
             c = input_string[ptr]
-        return [ptr, input_string[start:ptr]]
-    return [start, None]
+        return Result(ptr, input_string[start:ptr])
+    return Result(start, None)
 
 def label_ref(assm):
     white_space(assm)
@@ -427,13 +291,14 @@ def decimal(string, start = 0):
     ptr = start 
     d = string[ptr]
     if d.isdigit():
-        [ptr, token] = integer(string, ptr)
-        if token is not None:
-            [ptr, token] = period(string,ptr)
-            if token is not None:    
-                [ptr, token] = integer(string, ptr)
-                return [ptr, float(string[start:ptr])]
-    return [start, None]
+        result1 = integer(string, ptr)
+        if is_successful(result1):
+            result2 = period(string, result1.ptr)
+            if is_successful(result2):    
+                result3 = integer(string, result2.ptr)
+                if is_successful(result3):
+                    return Result(result3.ptr, float(string[start:result3.ptr]))
+    return Result(start, None)
 
 def assemble(source_code=''):
     assm = Assembler(source_code)
@@ -502,23 +367,15 @@ def label(assm):
             return True 
     return False
 
-def comment_(string, ptr):
-    [ptr, token] = semicolon(string, ptr)
-    if token is not None:
+def comment(string, ptr):
+    result = semicolon(string, ptr)
+    if is_successful(result):
+        ptr = result.ptr
         while string[ptr] != '\n':
             ptr += 1
-        return [ptr, True]
-    return [ptr, None]
+        return Result(ptr, True)
+    return Result(ptr, None)
 
-def comment(assm):
-    [ptr, token] = semicolon(assm.input, assm.start)
-    if token is not None:
-        while assm.input[ptr] != '\n':
-            ptr += 1
-        assm.start = ptr+1 
-        assm.pos = ptr+1
-        return True 
-    return False
 
 def main():
     src = """iconst1
