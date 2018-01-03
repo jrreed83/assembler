@@ -59,7 +59,7 @@ class Result:
         self.token = token
 
 def is_successful(result):
-    return !(self.token == None) 
+    return result.token != None 
 
 def reserved(keyword, string, start=0): 
     start = space(string, start)    
@@ -100,6 +100,58 @@ def instruction_fsub_(string, ptr):
 
 def instruction_fmul_(string, ptr):
     return reserved('fmul', string, ptr)
+
+def instruction_(string, ptr):
+
+    result = instruction_ipush_(string, ptr)
+    if is_successful(result):
+        return result
+
+    result = instruction_iadd_(string, ptr)
+    if is_successful(result):
+        return result
+
+    result = instruction_fadd_(string, ptr)
+    if is_successful(result):
+        return result
+
+    result = instruction_isub_(string, ptr)
+    if is_successful(result):
+        return result
+
+    result = instruction_imul_(string, ptr)
+    if is_successful(result):
+        return result
+
+    result = instruction_fpush_(string, ptr)
+    if is_successful(result):
+        return result
+
+    result = instruction_spush_(string, ptr)
+    if is_successful(result):
+        return result
+
+    result = instruction_halt_(string, ptr)
+    if is_successful(result):
+        return result
+
+    result = instruction_print_(string, ptr)
+    if is_successful(result):
+        return result
+
+    result = instruction_iconst0_(string, ptr)
+    if is_successful(result):
+        return result
+
+    result = instruction_iconst1_(string, ptr)
+    if is_successful(result):
+        return result
+
+    result = instruction_iconst2_(string, ptr)
+    if is_successful(result):
+        return result
+
+    return [ptr, None]
 
 def instruction_halt(assm):
     [stop, token] = reserved('halt', assm.input, assm.start)
