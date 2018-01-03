@@ -258,7 +258,7 @@ def quoted_string(input_string, start=0):
         if is_successful(result2):
             result3 = quote(input_string, result2.ptr)
             if is_successful(result3):
-                return Result(result2.ptr, result2.token)
+                return Result(result3.ptr, result2.token)
     return Result(start, None)
 
 def string(input_string, start=0):
@@ -347,25 +347,14 @@ def expression(assm):
     else:
         return False
 
-def label_(input_string, ptr):
-    [ptr, token_] = string(input_string, ptr)
-    if token_ is not None:
-        [ptr, token] = colon(input_string, ptr)
-        if token is not None:
-            return [ptr, token_]
-    return [ptr, None]
+def label(input_string, ptr):
+    result1 = string(input_string, ptr)
+    if is_successful(result1):
+        result2 = colon(input_string, result1.ptr)
+        if is_successful(result2):
+            return Result(result2.ptr, result1.token)
+    return Result(ptr, None)
 
-def label(assm):
-    ptr = assm.start 
-    [ptr, token_] = string(assm.input, ptr)
-    if token_ is not None:
-        [ptr, token] = colon(assm.input, ptr)
-        if token is not None:
-            assm.labels[token_] = assm.ip
-            assm.start = ptr 
-            assm.pos = ptr
-            return True 
-    return False
 
 def comment(string, ptr):
     result = semicolon(string, ptr)

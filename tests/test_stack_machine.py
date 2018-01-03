@@ -5,13 +5,10 @@ def test_string():
 
 def test_comment():
     assert comment('; this is a comment\n', 0) == Result(19, True)
-    
-def test_label():
-    x = 'test:\n'
-    assm = Assembler(x)
-    label(assm)
-    assert assm.labels == {'test':0}
 
+def test_label():
+    assert label('test:\n', 0) == Result(5, 'test')
+    
 def test_instruction_iadd(): 
     assert instruction_iadd('iadd\n', 0) == Result(4, IADD)
 
