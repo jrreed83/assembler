@@ -71,6 +71,10 @@ def is_successful(result):
     ptr, rest = result
     return (rest is not None)
 
+def failed(result):
+    _, rest = result
+    return (rest is None)
+
 def reserved(keyword, string, start=0): 
     start = space(string, start)    
     stop = start + len(keyword)    
@@ -153,48 +157,61 @@ def match(char, string, start):
 def quoted_string(input_string, start=0):
     ptr = space(input_string, start)
     result1 = match('\"', input_string, ptr)
-    if is_successful(result1):
-        ptr1, _ = result1
-        result2 = string(input_string, ptr1)
-        if is_successful(result2):
-            ptr2,(tag, val) = result2
-            result3 = match('\"',input_string, ptr2)
-            if is_successful(result3):
-                ptr3,_ = result3
-                return (ptr3, (tag, val))
-    return (start, None)
+    if failed (result1):
+        return (start, None)
+
+    ptr1, _ = result1
+    result2 = string(input_string, ptr1)
+    if failed(result2):
+        return (start, None)
+
+    ptr2, (tag, val) = result2
+    result3 = match('\"',input_string, ptr2)
+    if failed(result3):
+        return (start, None)
+
+    ptr3,_ = result3
+    return (ptr3, (tag, val))
+    
 
 def string(input_string, start=0):
     start = space(input_string, start)
     ptr = start
     c = input_string[ptr]
-    if c.isalpha():
+    if not c.isalpha():
+        return (start, None)
+    ptr += 1
+    c = input_string[ptr]
+    while c.isalpha() or c.isdigit():
         ptr += 1
         c = input_string[ptr]
-        while c.isalpha() or c.isdigit():
-            ptr += 1
-            c = input_string[ptr]
-        return (ptr, (Type.STRING, input_string[start:ptr]))
-    return (start, None)
+    return (ptr, (Type.STRING, input_string[start:ptr]))
+
 
 def decimal(string, start = 0):
     start = space(string, start)
     ptr = start 
     d = string[ptr]
-    if d.isdigit():
-        result1 = integer(string, ptr)
-        if is_successful(result1):
-            ptr1, _ = result1
-            result2 = match('.', string, ptr1)
-            if is_successful(result2):    
-                ptr2, _ = result2
-                result3 = integer(string, ptr2)
-                if is_successful(result3):
-                    ptr3, _ = result3
-                    number = string[start:ptr3]
-                    token = Token(Type.DECIMAL, number)
-                    return (ptr3, token)
-    return (start, None)
+    if not d.isdigit():
+        return (start, None)
+
+    result1 = integer(string, ptr)
+    if failed(result1):
+        return (start, None)
+
+    ptr1, _ = result1
+    result2 = match('.', string, ptr1)
+    if failed(result2):    
+        return (start, None)
+
+    ptr2, _ = result2
+    result3 = integer(string, ptr2)
+    if failed(result3):
+        return (start, None)    
+
+    ptr3, _ = result3
+    number = string[start:ptr3]
+    return (ptr3, (Type.DECIMAL, number))
 
 
 
