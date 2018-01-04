@@ -1,44 +1,53 @@
 import io
 from collections import namedtuple
+from enum import Enum 
 
-HALT = 1
-IADD = 2
-ISUB = 3
-IMUL = 4
-ICONST0 = 5
-ICONST1 = 6
-ICONST2 = 7
-IPUSH = 8
-PRINT = 9
-FPUSH = 10
-SPUSH = 11
-JUMP = 12 
-FADD = 13
-FMUL = 14
-FSUB = 15
-POP = 16
+class Type(Enum):
+    OPCODE = 0
+    STRING  = 1
+    INTEGER = 2 
+    DECIMAL = 3
+    LABEL = 4
+
+class Op(Enum):
+    HALT = 1
+    IADD = 2
+    ISUB = 3
+    IMUL = 4
+    ICONST0 = 5
+    ICONST1 = 6
+    ICONST2 = 7
+    IPUSH = 8
+    PRINT = 9
+    FPUSH = 10
+    SPUSH = 11
+    JUMP = 12 
+    FADD = 13
+    FMUL = 14
+    FSUB = 15
+    POP = 16
 
 
-Result = namedtuple('Result', ['ptr', 'tokens'])
-Token = namedtuple('Token', ['kind', 'value'])
+Result = namedtuple('Result', ['ptr', 'token'])
+Token = namedtuple('Token', ['type', 'value'])
 
 RESERVED = {
-    'halt': HALT,
-    'iadd': IADD,
-    'isub': ISUB,
-    'imul': IMUL,
-    'iconst0': ICONST0,
-    'iconst1': ICONST1, 
-    'iconst2': ICONST2,
-    'ipush': IPUSH,
-    'print': PRINT,    
-    'spush': SPUSH,
-    'fpush': FPUSH,  
-    'jump': JUMP,
-    'fadd': FADD,
-    'fmul': FMUL,
-    'fsub': FSUB,
-    'pop': POP,
+    'halt': Op.HALT,
+    'iadd': Op.IADD,
+    'isub': Op.ISUB,
+    'imul': Op.IMUL,
+    'iconst0': Op.ICONST0,
+    'iconst1': Op.ICONST1, 
+    'iconst2': Op.ICONST2,
+    'ipush': Op.IPUSH,
+    'print': Op.PRINT,    
+    'spush': Op.SPUSH,
+    'fpush': Op.FPUSH,  
+    'jump': Op.JUMP,
+    'fadd': Op.FADD,
+    'fmul': Op.FMUL,
+    'fsub': Op.FSUB,
+    'pop': Op.POP,
 }
 
 
@@ -60,7 +69,7 @@ class Assembler:
 
 
 def is_successful(result):
-    return len(result.tokens) != 0
+    return len(result.token) is not None
 
 
 def reserved(keyword, string, start=0): 
@@ -68,46 +77,54 @@ def reserved(keyword, string, start=0):
     stop = start + len(keyword)    
     if keyword == string[start:stop]:
         if keyword in RESERVED.keys():
-            data = RESERVED[keyword]
-            return Result(stop, [Token('reserved', data)])
-    stop = start 
-    return Result(stop, [])
+            value = RESERVED[keyword]
+            return Result(stop, Token(Type.OPCODE, value))
+    return Result(start, None)
 
-def instruction_halt(string, ptr):
+def halt_op(string, ptr):
     return reserved('halt', string, ptr)
 
-def instruction_iadd(string, ptr):
+def iadd_op(string, ptr):
     return reserved('iadd', string, ptr)
 
-def instruction_isub(string, ptr):
+def isub_op(string, ptr):
     return reserved('isub', string, ptr)
 
-def instruction_imul(string, ptr):
+def imul_op(string, ptr):
     return reserved('imul', string, ptr)
 
-def instruction_print(string, ptr):
+def print_op(string, ptr):
     return reserved('print', string, ptr)
 
-def instruction_pop(string, ptr):
+def pop_op(string, ptr):
     return reserved('pop', string, ptr)
 
-def instruction_fadd(string, ptr):
+def fadd_op(string, ptr):
     return reserved('fadd', string, ptr)
 
-def instruction_fsub(string, ptr):
+def fsub_op(string, ptr):
     return reserved('fsub', string, ptr)
 
-def instruction_fmul(string, ptr):
+def fmul_op(string, ptr):
     return reserved('fmul', string, ptr)
 
-def instruction_iconst0(string, ptr):
+def iconst0_op(string, ptr):
     return reserved('iconst0', string, ptr)
 
-def instruction_iconst1(string, ptr):
+def iconst1_op(string, ptr):
     return reserved('iconst1', string, ptr)
 
-def instruction_iconst2(string, ptr):
+def iconst2_op(string, ptr):
     return reserved('iconst2', string, ptr)
+
+def ipush_op(string, ptr):
+    return reserved('ipush', string, ptr)
+
+def spush_op(string, ptr):
+    return reserved('spush', string, ptr)
+
+def fpush_op(string, ptr):
+    return reserved('fpush', string, ptr)
 
 def instruction(string, ptr):
 
@@ -161,38 +178,38 @@ def instruction(string, ptr):
 
     return Result(ptr, None)
 
-def instruction_ipush(string, ptr):
-    result1 = reserved('ipush', string, ptr)
-    print(result1)    
-    if is_successful(result1):
-        result2 = integer(string, result1.ptr)
-        if is_successful(result2):
-            _, [tok1] = result1 
-            _, [tok2] = result2
-            return Result(result2.ptr, [tok1, tok2])
-    return Result(ptr, [])
+# def instruction_ipush(string, ptr):
+#     result1 = reserved('ipush', string, ptr)
+#     print(result1)    
+#     if is_successful(result1):
+#         result2 = integer(string, result1.ptr)
+#         if is_successful(result2):
+#             _, [tok1] = result1 
+#             _, [tok2] = result2
+#             return Result(result2.ptr, [tok1, tok2])
+#     return Result(ptr, [])
 
 
-def instruction_spush(string, ptr):
-    result1 = reserved('spush', string, ptr)
-    if is_successful(result1):
-        result2 = quoted_string(string, result1.ptr)
-        if is_successful(result2):
-            _, [tok1] = result1 
-            _, [tok2] = result2
-            return Result(result2.ptr, [tok1, tok2])
-    return Result(ptr, [])
+# def instruction_spush(string, ptr):
+#     result1 = reserved('spush', string, ptr)
+#     if is_successful(result1):
+#         result2 = quoted_string(string, result1.ptr)
+#         if is_successful(result2):
+#             _, [tok1] = result1 
+#             _, [tok2] = result2
+#             return Result(result2.ptr, [tok1, tok2])
+#     return Result(ptr, [])
 
 
-def instruction_fpush(string, ptr):
-    result1 = reserved('fpush', string, ptr)
-    if is_successful(result1):
-        result2 = decimal(string, result1.ptr)
-        if is_successful(result2):
-            _, [tok1] = result1 
-            _, [tok2] = result2
-            return Result(result2.ptr, [tok1, tok2])
-    return Result(ptr, [])
+# def instruction_fpush(string, ptr):
+#     result1 = reserved('fpush', string, ptr)
+#     if is_successful(result1):
+#         result2 = decimal(string, result1.ptr)
+#         if is_successful(result2):
+#             _, [tok1] = result1 
+#             _, [tok2] = result2
+#             return Result(result2.ptr, [tok1, tok2])
+#     return Result(ptr, [])
 
 def space(string, start = 0):
     ptr = start
@@ -203,17 +220,15 @@ def space(string, start = 0):
 def integer(string, start=0):
     ptr = space(string, start)
     if not string[ptr].isdigit():
-        return Result(ptr, [])
+        return Result(ptr, None)
 
     while string[ptr].isdigit():
         ptr += 1 
-
-    value = int(string[start:ptr])
     #b0 = (value >> 0 ) & 0xff
     #b1 = (value >> 8 ) & 0xff 
     #b2 = (value >> 16) & 0xff
     #b3 = (value >> 24) & 0xff 
-    return Result(ptr, [Token('int', value)])
+    return Result(ptr, Token(Type.INTEGER, string[start:ptr]))
 
 
 def quote(string, start = 0):
@@ -249,8 +264,8 @@ def quoted_string(input_string, start=0):
         if is_successful(result2):
             result3 = quote(input_string, result2.ptr)
             if is_successful(result3):
-                return Result(result3.ptr, [result2.token])
-    return Result(start, [])
+                return Result(result3.ptr, result2.token)
+    return Result(start, None)
 
 def string(input_string, start=0):
     start = space(input_string, start)
@@ -262,7 +277,7 @@ def string(input_string, start=0):
         while c.isalpha() or c.isdigit():
             ptr += 1
             c = input_string[ptr]
-        return Result(ptr, [Token('str', input_string[start:ptr])])
+        return Result(ptr, Token(Type.STRING, input_string[start:ptr]))
     return Result(start, None)
 
 def label_ref(assm):
@@ -288,8 +303,10 @@ def decimal(string, start = 0):
             if is_successful(result2):    
                 result3 = integer(string, result2.ptr)
                 if is_successful(result3):
-                    return Result(result3.ptr, [Token('flt',float(string[start:result3.ptr])])
-    return Result(start, [])
+                    number = string[start:result3.ptr]
+                    token = Token(Type.DECIMAL, number)
+                    return Result(result3.ptr, token)
+    return Result(start, None)
 
 def assemble(source_code=''):
     assm = Assembler(source_code)
@@ -299,12 +316,26 @@ def assemble(source_code=''):
             break
     return assm
 
-def commit(cpu, instruction):
-    ptr, token = instruction
-    if len(token) == 1:
-        cpu.code[cpu.ip] = token 
-        cpu.ip += 1    
-        return cpu
+def commit(cpu, result):
+    ptr, (tag, val) = result
+    if tag == Type.DECIMAL:
+        return (ptr, 'statement')
+    elif tag == Type.INTEGER:
+        return (ptr, 'statement')
+    elif tag == Type.LABEL:
+        return (ptr, 'statement')
+    elif tag == Type.STRING:
+        return (ptr, 'statement') 
+    elif tag == Type.OPCODE:
+
+        if val in [Op.FADD, Op.IADD]:
+            return (ptr, 'statement')
+        elif val == Op.IPUSH:
+            return (ptr, 'integer')
+        elif val == Op.SPUSH:
+            return (ptr, 'quoted_string')
+        elif val == Op.FPUSH:
+            return (ptr, 'decimal')
 
 def instruction(assm):
     if instruction_ipush(assm):
