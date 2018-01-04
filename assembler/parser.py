@@ -27,7 +27,6 @@ class Op(Enum):
     FSUB = 15
     POP = 16
 
-
 Result = namedtuple('Result', ['ptr', 'token'])
 Token = namedtuple('Token', ['type', 'value'])
 
@@ -69,8 +68,8 @@ class Assembler:
 
 
 def is_successful(result):
-    return len(result.token) is not None
-
+    ptr, rest = result
+    return (rest is not None)
 
 def reserved(keyword, string, start=0): 
     start = space(string, start)    
@@ -78,8 +77,8 @@ def reserved(keyword, string, start=0):
     if keyword == string[start:stop]:
         if keyword in RESERVED.keys():
             value = RESERVED[keyword]
-            return Result(stop, Token(Type.OPCODE, value))
-    return Result(start, None)
+            return (stop, value)
+    return (start, None)
 
 def halt_op(string, ptr):
     return reserved('halt', string, ptr)
@@ -126,91 +125,6 @@ def spush_op(string, ptr):
 def fpush_op(string, ptr):
     return reserved('fpush', string, ptr)
 
-def instruction(string, ptr):
-
-    result = instruction_ipush(string, ptr)
-    if is_successful(result):
-        return result
-
-    result = instruction_iadd(string, ptr)
-    if is_successful(result):
-        return result
-
-    result = instruction_fadd(string, ptr)
-    if is_successful(result):
-        return result
-
-    result = instruction_isub(string, ptr)
-    if is_successful(result):
-        return result
-
-    result = instruction_imul(string, ptr)
-    if is_successful(result):
-        return result
-
-    result = instruction_fpush(string, ptr)
-    if is_successful(result):
-        return result
-
-    result = instruction_spush(string, ptr)
-    if is_successful(result):
-        return result
-
-    result = instruction_halt(string, ptr)
-    if is_successful(result):
-        return result
-
-    result = instruction_print(string, ptr)
-    if is_successful(result):
-        return result
-
-    result = instruction_iconst0(string, ptr)
-    if is_successful(result):
-        return result
-
-    result = instruction_iconst1(string, ptr)
-    if is_successful(result):
-        return result
-
-    result = instruction_iconst2(string, ptr)
-    if is_successful(result):
-        return result
-
-    return Result(ptr, None)
-
-# def instruction_ipush(string, ptr):
-#     result1 = reserved('ipush', string, ptr)
-#     print(result1)    
-#     if is_successful(result1):
-#         result2 = integer(string, result1.ptr)
-#         if is_successful(result2):
-#             _, [tok1] = result1 
-#             _, [tok2] = result2
-#             return Result(result2.ptr, [tok1, tok2])
-#     return Result(ptr, [])
-
-
-# def instruction_spush(string, ptr):
-#     result1 = reserved('spush', string, ptr)
-#     if is_successful(result1):
-#         result2 = quoted_string(string, result1.ptr)
-#         if is_successful(result2):
-#             _, [tok1] = result1 
-#             _, [tok2] = result2
-#             return Result(result2.ptr, [tok1, tok2])
-#     return Result(ptr, [])
-
-
-# def instruction_fpush(string, ptr):
-#     result1 = reserved('fpush', string, ptr)
-#     if is_successful(result1):
-#         result2 = decimal(string, result1.ptr)
-#         if is_successful(result2):
-#             _, [tok1] = result1 
-#             _, [tok2] = result2
-#             return Result(result2.ptr, [tok1, tok2])
-#     return Result(ptr, [])
-
 def space(string, start = 0):
     ptr = start
     while string[ptr].isspace():
@@ -218,54 +132,37 @@ def space(string, start = 0):
     return ptr
 
 def integer(string, start=0):
-    ptr = space(string, start)
+    start = space(string, start)
+    ptr = start
     if not string[ptr].isdigit():
-        return Result(ptr, None)
+        return (ptr, None)
 
     while string[ptr].isdigit():
         ptr += 1 
-    #b0 = (value >> 0 ) & 0xff
-    #b1 = (value >> 8 ) & 0xff 
-    #b2 = (value >> 16) & 0xff
-    #b3 = (value >> 24) & 0xff 
-    return Result(ptr, Token(Type.INTEGER, string[start:ptr]))
+    val = string[start:ptr]
+    return (ptr, (Type.INTEGER, val))
 
 
-def quote(string, start = 0):
+def match(char, string, start):
     ptr = space(string, start)
-    if string[ptr] == '\"':
-        return Result(ptr+1, '\"')
-    return Result(start, None)  
+    if string[ptr] == char:
+        return (ptr+1, char)
+    return (start, None) 
 
-def colon(string, start = 0):
-    ptr = space(string, start)
-    if string[ptr] == ':':
-        return Result(ptr+1, ':')
-    return Result(start, None)  
-
-def semicolon(string, start = 0):
-    start = space(string, start)
-    ptr = start
-    if string[ptr] == ';':
-        return Result(ptr+1, ';')
-    return Result(start, None) 
-
-def period(string, start = 0):
-    ptr = space(string, start)
-    if string[ptr] == '.':
-        return Result(ptr+1, '.')
-    return Result(start, None) 
 
 def quoted_string(input_string, start=0):
     ptr = space(input_string, start)
-    result1 = quote(input_string, ptr)
+    result1 = match('\"', input_string, ptr)
     if is_successful(result1):
-        result2 = string(input_string, result1.ptr)
+        ptr1, _ = result1
+        result2 = string(input_string, ptr1)
         if is_successful(result2):
-            result3 = quote(input_string, result2.ptr)
+            ptr2,(tag, val) = result2
+            result3 = match('\"',input_string, ptr2)
             if is_successful(result3):
-                return Result(result3.ptr, result2.token)
-    return Result(start, None)
+                ptr3,_ = result3
+                return (ptr3, (tag, val))
+    return (start, None)
 
 def string(input_string, start=0):
     start = space(input_string, start)
@@ -277,20 +174,8 @@ def string(input_string, start=0):
         while c.isalpha() or c.isdigit():
             ptr += 1
             c = input_string[ptr]
-        return Result(ptr, Token(Type.STRING, input_string[start:ptr]))
-    return Result(start, None)
-
-def label_ref(assm):
-    white_space(assm)
-    c = peek(assm)
-    if c.isalpha():
-        c = next_char(assm)
-        while (c.isalpha() or c.isdigit()):
-            c = next_char(assm)
-        rewind(assm) 
-        assm.ip += 1
-        return True
-    return False
+        return (ptr, (Type.STRING, input_string[start:ptr]))
+    return (start, None)
 
 def decimal(string, start = 0):
     start = space(string, start)
@@ -299,88 +184,70 @@ def decimal(string, start = 0):
     if d.isdigit():
         result1 = integer(string, ptr)
         if is_successful(result1):
-            result2 = period(string, result1.ptr)
+            ptr1, _ = result1
+            result2 = match('.', string, ptr1)
             if is_successful(result2):    
-                result3 = integer(string, result2.ptr)
+                ptr2, _ = result2
+                result3 = integer(string, ptr2)
                 if is_successful(result3):
-                    number = string[start:result3.ptr]
+                    ptr3, _ = result3
+                    number = string[start:ptr3]
                     token = Token(Type.DECIMAL, number)
-                    return Result(result3.ptr, token)
-    return Result(start, None)
+                    return (ptr3, token)
+    return (start, None)
 
-def assemble(source_code=''):
-    assm = Assembler(source_code)
-    while assm.pos < len(assm.input):
-        expression(assm)
-        if assm.input[assm.start:].isspace():
-            break
-    return assm
 
-def commit(cpu, result):
-    ptr, (tag, val) = result
-    if tag == Type.DECIMAL:
-        return (ptr, 'statement')
-    elif tag == Type.INTEGER:
-        return (ptr, 'statement')
-    elif tag == Type.LABEL:
-        return (ptr, 'statement')
-    elif tag == Type.STRING:
-        return (ptr, 'statement') 
-    elif tag == Type.OPCODE:
 
-        if val in [Op.FADD, Op.IADD]:
+class CPU():
+    def __init__(self):
+        self.code = []
+    def commit(self, result):
+        ptr, (tag, val) = result
+
+        if tag == Type.DECIMAL:
             return (ptr, 'statement')
-        elif val == Op.IPUSH:
-            return (ptr, 'integer')
-        elif val == Op.SPUSH:
-            return (ptr, 'quoted_string')
-        elif val == Op.FPUSH:
-            return (ptr, 'decimal')
+        elif tag == Type.INTEGER:
+            val = int(val)
+            b0 = (val >> 0 ) & 0xff
+            b1 = (val >> 8 ) & 0xff 
+            b2 = (val >> 16) & 0xff
+            b3 = (val >> 24) & 0xff
+            self.code += [b0, b1, b2, b3] 
+            return (ptr, 'statement')
+        elif tag == Type.LABEL:
+            return (ptr, 'statement')
+        elif tag == Type.STRING:
+            return (ptr, 'statement') 
+        elif tag == Type.OPCODE:
+            self.code += [val.value]
+            if val in [Op.FADD, Op.IADD, Op.PRINT, Op.HALT]:
+                return (ptr, 'statement')
+            elif val == Op.IPUSH:
+                return (ptr, 'integer')
+            elif val == Op.SPUSH:
+                return (ptr, 'quoted_string')
+            elif val == Op.FPUSH:
+                return (ptr, 'decimal')
+    
+    def execute(self, string):
+        state = 'statement'
+        ptr = 0
+        while 1:
+            if state == 'statement':
+                result = statement(string, ptr)
+            elif state == 'integer':
+                result = integer(string, ptr)
 
-def instruction(assm):
-    if instruction_ipush(assm):
-        return True 
-    elif instruction_iadd(assm):
-        return True
-    elif instruction_fadd(assm):
-        return True    
-    elif instruction_isub(assm):
-        return True
-    elif instruction_imul(assm):
-        return True
-    elif instruction_fpush(assm):
-        return True
-    elif instruction_spush(assm):
-        return True
-    elif instruction_halt(assm):
-        return True
-    elif instruction_print(assm):
-        return True
-    elif instruction_iconst0(assm):
-        return True
-    elif instruction_iconst1(assm):
-        return True
-    elif instruction_iconst2(assm):
-        return True
-    else:
-        return False
-
-def expression(assm):
-    if instruction(assm):
-        return True
-    elif label(assm):
-        return True    
-    elif comment(assm):
-        return True
-    else:
-        return False
+            ptr, state = self.commit(result)
 
 def label(input_string, ptr):
     result1 = string(input_string, ptr)
     if is_successful(result1):
-        result2 = colon(input_string, result1.ptr)
+        ptr1, (_, val) = result1
+        result2 = match(':', input_string, ptr1)
         if is_successful(result2):
-            return Result(result2.ptr, result1.token)
+            ptr2, _ = result2
+            return Result(ptr2, (Type.LABEL, val))
     return Result(ptr, None)
 
 
