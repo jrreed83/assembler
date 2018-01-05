@@ -223,6 +223,14 @@ class CPU():
             ptr, state = self.commit(result)
 
 def label(input_string, ptr):
+
+    for c in input_string[ptr:]:
+        if c == ':':
+            break
+    else:
+        return (ptr, None)
+
+    
     ptr1, token1 = string(input_string, ptr)
     if token1 is None:
         return (ptr, None)
