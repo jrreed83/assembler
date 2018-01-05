@@ -27,9 +27,6 @@ class Op(Enum):
     FSUB = 15
     POP = 16
 
-Result = namedtuple('Result', ['ptr', 'token'])
-Token = namedtuple('Token', ['type', 'value'])
-
 RESERVED = {
     'halt': Op.HALT,
     'iadd': Op.IADD,
@@ -84,50 +81,30 @@ def reserved(keyword, string, start=0):
             return (stop, value)
     return (start, None)
 
-def halt_op(string, ptr):
-    return reserved('halt', string, ptr)
+def operation(string, ptr):
+    for key in RESERVED.keys():
+        ptr, token = reserved(key, string, ptr)
+        if token is not None:
+            result = (ptr, token)
+            break
+    else:
+        result = (ptr, None)
+    return result
 
-def iadd_op(string, ptr):
-    return reserved('iadd', string, ptr)
+def statement(string, ptr):
+    ptr1, token1 = operation(string, ptr)
+    if token1 is not None:
+        return (ptr1, token1)
 
-def isub_op(string, ptr):
-    return reserved('isub', string, ptr)
+    ptr1, token1 = comment(string, ptr)
+    if token1 is not None:
+        return (ptr1, token1)
 
-def imul_op(string, ptr):
-    return reserved('imul', string, ptr)
+#    ptr1, token1 = label(string, ptr)
+#    if token1 is not None:
+#        return (ptr1, token1)
 
-def print_op(string, ptr):
-    return reserved('print', string, ptr)
-
-def pop_op(string, ptr):
-    return reserved('pop', string, ptr)
-
-def fadd_op(string, ptr):
-    return reserved('fadd', string, ptr)
-
-def fsub_op(string, ptr):
-    return reserved('fsub', string, ptr)
-
-def fmul_op(string, ptr):
-    return reserved('fmul', string, ptr)
-
-def iconst0_op(string, ptr):
-    return reserved('iconst0', string, ptr)
-
-def iconst1_op(string, ptr):
-    return reserved('iconst1', string, ptr)
-
-def iconst2_op(string, ptr):
-    return reserved('iconst2', string, ptr)
-
-def ipush_op(string, ptr):
-    return reserved('ipush', string, ptr)
-
-def spush_op(string, ptr):
-    return reserved('spush', string, ptr)
-
-def fpush_op(string, ptr):
-    return reserved('fpush', string, ptr)
+    return (ptr, None)    
 
 def space(string, start = 0):
     ptr = start
@@ -149,6 +126,10 @@ def integer(string, start=0):
 
 def match(char, string, start):
     ptr = space(string, start)
+
+    if ptr == len(string):
+        return (ptr, None)  
+
     if string[ptr] == char:
         return (ptr+1, char)
     return (start, None) 
@@ -156,22 +137,21 @@ def match(char, string, start):
 
 def quoted_string(input_string, start=0):
     ptr = space(input_string, start)
-    result1 = match('\"', input_string, ptr)
-    if failed (result1):
+    ptr1, token1 = match('\"', input_string, ptr)
+    if token1 is None:
         return (start, None)
 
-    ptr1, _ = result1
-    result2 = string(input_string, ptr1)
-    if failed(result2):
+    ptr2, token2 = string(input_string, ptr1)
+    if token2 is None:
+        return (start, None)
+    tag2, val2 = token2
+
+    ptr3, token3 = match('\"',input_string, ptr2)
+    if token3 is None:
         return (start, None)
 
-    ptr2, (tag, val) = result2
-    result3 = match('\"',input_string, ptr2)
-    if failed(result3):
-        return (start, None)
-
-    ptr3,_ = result3
-    return (ptr3, (tag, val))
+ 
+    return (ptr3, (tag2, val2))
     
 
 def string(input_string, start=0):
@@ -191,25 +171,19 @@ def string(input_string, start=0):
 def decimal(string, start = 0):
     start = space(string, start)
     ptr = start 
-    d = string[ptr]
-    if not d.isdigit():
+
+    ptr1, token1 = integer(string, ptr)
+    if token1 is None:
         return (start, None)
 
-    result1 = integer(string, ptr)
-    if failed(result1):
+    ptr2, token2 = match('.', string, ptr1)
+    if token2 is None:    
         return (start, None)
 
-    ptr1, _ = result1
-    result2 = match('.', string, ptr1)
-    if failed(result2):    
-        return (start, None)
-
-    ptr2, _ = result2
-    result3 = integer(string, ptr2)
-    if failed(result3):
+    ptr3, token3 = integer(string, ptr2)
+    if token3 is None:
         return (start, None)    
 
-    ptr3, _ = result3
     number = string[start:ptr3]
     return (ptr3, (Type.DECIMAL, number))
 
@@ -258,24 +232,26 @@ class CPU():
             ptr, state = self.commit(result)
 
 def label(input_string, ptr):
-    result1 = string(input_string, ptr)
-    if is_successful(result1):
-        ptr1, (_, val) = result1
-        result2 = match(':', input_string, ptr1)
-        if is_successful(result2):
-            ptr2, _ = result2
-            return Result(ptr2, (Type.LABEL, val))
-    return Result(ptr, None)
+    ptr1, token1 = string(input_string, ptr)
+    if token1 is None:
+        return (ptr, None)
+    _, label = token1 
+
+    ptr2, token2 = match(':', input_string, ptr1)
+    if token2 is None: 
+        return (ptr, None)
+            
+    return (ptr2, (Type.LABEL, label))
 
 
 def comment(string, ptr):
-    result = semicolon(string, ptr)
-    if is_successful(result):
-        ptr = result.ptr
-        while string[ptr] != '\n':
-            ptr += 1
-        return Result(ptr, True)
-    return Result(ptr, None)
+    ptr1, token1 = match(';', string, ptr)
+    if token1 is None: 
+        return (ptr, None)
+
+    while string[ptr1] != '\n':
+        ptr1 += 1
+    return (ptr1, True)
 
 
 def main():

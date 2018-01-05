@@ -9,14 +9,23 @@ def test_comment():
 def test_label():
     assert label('test:\n', 0) == (5, (Type.LABEL, 'test'))
 
-def test_iadd_op(): 
-    assert iadd_op('iadd\n', 0) == (4, Op.IADD)
+def test_iadd(): 
+    assert operation('iadd\n', 0) == (4, Op.IADD)
 
 def test_integer():
     assert integer('235\n') == (3, (Type.INTEGER, '235'))
 
-def test_ipush_op():
-    assert ipush_op('ipush 5635\n', 0) == (5, Op.IPUSH)
+def test_decimal():
+    assert decimal('2.35\n') == (4, (Type.DECIMAL, '2.35'))
 
-def test_print_op():
-    assert print_op('print\n', 0) == (5, Op.PRINT) 
+def test_ipush():
+    assert operation('ipush 5635\n', 0) == (5, Op.IPUSH)
+
+def test_print():
+    assert operation('print\n', 0) == (5, Op.PRINT) 
+
+def test_failed_op():
+    assert operation('foo\n', 0) == (0, None)
+
+def test_failed_statement():
+    assert statement('foo\n     ', 0) == (0, None)    
