@@ -63,15 +63,6 @@ class Assembler:
     def __repr__(self):
         return '[{0}]'.format(self.pos)
 
-
-def is_successful(result):
-    ptr, rest = result
-    return (rest is not None)
-
-def failed(result):
-    _, rest = result
-    return (rest is None)
-
 def reserved(keyword, string, start=0): 
     start = space(string, start)    
     stop = start + len(keyword)    
