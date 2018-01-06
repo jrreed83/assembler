@@ -46,6 +46,8 @@ RESERVED = {
     'pop': Op.POP,
 }
 
+def stream(string):
+    return {'string': string, 'ptr': 0}
 
 class Assembler:
     def __init__(self, input=''):
@@ -63,67 +65,67 @@ class Assembler:
     def __repr__(self):
         return '[{0}]'.format(self.pos)
 
-def reserved(keyword, string, start=0): 
-    start = space(string, start)    
+def reserved(keyword, stream): 
+    stream = space(stream)
+    start = stream.get('ptr', 0)   
+    string = stream.get('string') 
     stop = start + len(keyword)    
     if keyword == string[start:stop]:
-        if keyword in RESERVED.keys():
-            value = RESERVED[keyword]
-            return (stop, value)
-    return (start, None)
-
-def operation(string, ptr):
-    for key in RESERVED.keys():
-        ptr, token = reserved(key, string, ptr)
+        token = RESERVED.get(keyword, None)
         if token is not None:
-            result = (ptr, token)
-            break
-    else:
-        result = (ptr, None)
-    return result
+            return ({**stream, 'ptr': stop}, token)
+    return (stream, None)
 
-def statement(string, ptr):
-    ptr1, token1 = operation(string, ptr)
-    if token1 is not None:
-        return (ptr1, token1)
+def operation(stream):
+    for key in RESERVED.keys():
+        stream, token = reserved(key, stream)
+        if token is not None:
+            return (stream, token)
+    return (stream, None)
 
-    ptr1, token1 = comment(string, ptr)
-    if token1 is not None:
-        return (ptr1, token1)
+def statement(stream):
+    stream, token = operation(stream)
+    if token is not None:
+        return (stream, token)
 
-#    ptr1, token1 = label(string, ptr)
-#    if token1 is not None:
-#        return (ptr1, token1)
+    stream, token = comment(stream)
+    if token is not None:
+        return (stream, token)
 
-    return (ptr, None)    
+    stream, token = label(stream)
+    if token is not None:
+        return (stream, token)
 
-def space(string, start = 0):
-    ptr = start
+    return (stream, None)    
+
+def space(stream):#string, start = 0):
+    ptr = stream.get('ptr', 0)
+    string = stream.get('string')
     while string[ptr].isspace():
         ptr += 1
-    return ptr
+    return {**stream, 'ptr': ptr}
 
-def integer(string, start=0):
-    start = space(string, start)
-    ptr = start
-    if not string[ptr].isdigit():
-        return (ptr, None)
+def integer(stream):
+    stream = space(stream)
+    start = stream.get('ptr')
+    stop = start
+    string = stream.get('string')
+    if not string[stop].isdigit():
+        return (stream, None)
 
-    while string[ptr].isdigit():
-        ptr += 1 
-    val = string[start:ptr]
-    return (ptr, (Type.INTEGER, val))
+    while string[stop].isdigit():
+        stop += 1 
+    val = string[start:stop]
+    return ({**stream, 'ptr': stop}, (Type.INTEGER, val))
 
 
-def match(char, string, start):
-    ptr = space(string, start)
-
-    if ptr == len(string):
-        return (ptr, None)  
-
+def match(char, stream):
+    stream = space(stream)
+    string = stream.get('string')
+    ptr = stream.get('ptr')
     if string[ptr] == char:
-        return (ptr+1, char)
-    return (start, None) 
+        return ({**stream, 'ptr':ptr+1}, char)
+    return (stream, None) 
 
 
 def quoted_string(input_string, start=0):
@@ -159,24 +161,26 @@ def string(input_string, start=0):
     return (ptr, (Type.STRING, input_string[start:ptr]))
 
 
-def decimal(string, start = 0):
-    start = space(string, start)
-    ptr = start 
+def decimal(stream):
+    stream = space(stream)
+    start = stream.get('ptr')
 
-    ptr1, token1 = integer(string, ptr)
-    if token1 is None:
-        return (start, None)
+    stream, token = integer(stream)
+    if token is None:
+        return (stream, None)
 
-    ptr2, token2 = match('.', string, ptr1)
-    if token2 is None:    
-        return (start, None)
+    stream, token = match('.', stream)
+    if token is None:    
+        return (stream, None)
 
-    ptr3, token3 = integer(string, ptr2)
-    if token3 is None:
-        return (start, None)    
-
-    number = string[start:ptr3]
-    return (ptr3, (Type.DECIMAL, number))
+    stream, token = integer(stream)
+    if token is None:
+        return (stream, None)    
+    
+    stop = stream.get('ptr')
+    string = stream.get('string')
+    number = string[start:stop]
+    return (stream, (Type.DECIMAL, number))
 
 
 
@@ -243,14 +247,16 @@ def label(input_string, ptr):
     return (ptr2, (Type.LABEL, label))
 
 
-def comment(string, ptr):
-    ptr1, token1 = match(';', string, ptr)
-    if token1 is None: 
-        return (ptr, None)
+def comment(stream):
+    stream, token = match(';', stream)
+    if token is None: 
+        return (stream, None)
 
-    while string[ptr1] != '\n':
-        ptr1 += 1
-    return (ptr1, True)
+    string = stream.get('string')
+    ptr = stream.get('ptr')
+    while string[ptr] != '\n':
+        ptr += 1
+    return ({**stream, 'ptr': ptr}, True)
 
 
 def main():

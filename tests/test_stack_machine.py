@@ -1,7 +1,9 @@
 from assembler.parser import *
 
 def test_string():
-    assert quoted_string(""" "hello" """) == (8, (Type.STRING, 'hello'))
+    c_stream = stream(""" "hello" """)
+    _, token = quoted_string(**c_stream)
+    assert token == (Type.STRING, 'hello')
 
 def test_comment():
     assert comment('; this is a comment\n', 0) == (19, True)
@@ -28,4 +30,4 @@ def test_failed_op():
     assert operation('foo\n', 0) == (0, None)
 
 def test_failed_statement():
-    assert statement('foo\n     ', 0) == (0, None)    
+    assert statement('foo:\n     ', 0) == (0, None)    
