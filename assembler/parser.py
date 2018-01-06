@@ -128,37 +128,40 @@ def match(char, stream):
     return (stream, None) 
 
 
-def quoted_string(input_string, start=0):
-    ptr = space(input_string, start)
-    ptr1, token1 = match('\"', input_string, ptr)
-    if token1 is None:
-        return (start, None)
+def quoted_string(stream):
+    stream = space(stream)
+    stream, token_ = match('\"', stream)
+    if token_ is None:
+        return (stream, None)
 
-    ptr2, token2 = string(input_string, ptr1)
-    if token2 is None:
-        return (start, None)
-    tag2, val2 = token2
+    stream, token = string(stream)
 
-    ptr3, token3 = match('\"',input_string, ptr2)
-    if token3 is None:
-        return (start, None)
+    if token is None:
+        return (stream, None)
 
- 
-    return (ptr3, (tag2, val2))
+    tag, val = token
+
+    ptr, token_ = match('\"', stream)
+    if token_ is None:
+        return (stream, None)
+
+    return (stream, token)
     
 
-def string(input_string, start=0):
-    start = space(input_string, start)
-    ptr = start
-    c = input_string[ptr]
+def string(stream):
+    stream = space(stream)
+    start = stream['ptr']
+    stop = start
+    input_string = stream['string']
+    c = input_string[stop]
     if not c.isalpha():
-        return (start, None)
-    ptr += 1
-    c = input_string[ptr]
+        return (stream, None)
+    stop += 1
+    c = input_string[stop]
     while c.isalpha() or c.isdigit():
-        ptr += 1
-        c = input_string[ptr]
-    return (ptr, (Type.STRING, input_string[start:ptr]))
+        stop += 1
+        c = input_string[stop]
+    return ({**stream, 'ptr': stop}, (Type.STRING, input_string[start:stop]))
 
 
 def decimal(stream):
@@ -226,25 +229,27 @@ class CPU():
 
             ptr, state = self.commit(result)
 
-def label(input_string, ptr):
-
+def label(stream):
+    stream = space(stream)
+    input_string = stream['string']
+    ptr = stream['ptr'] 
     for c in input_string[ptr:]:
         if c == ':':
             break
     else:
         return (ptr, None)
+#    print(stream)
+    stream, token = string(stream)
+    print(stream)
+    if token is None:
+        return (stream, None)
+    _, label = token 
 
-    
-    ptr1, token1 = string(input_string, ptr)
-    if token1 is None:
-        return (ptr, None)
-    _, label = token1 
-
-    ptr2, token2 = match(':', input_string, ptr1)
-    if token2 is None: 
-        return (ptr, None)
+    stream, token = match(':', stream)
+    if token is None: 
+        return (stream, None)
             
-    return (ptr2, (Type.LABEL, label))
+    return (stream, (Type.LABEL, label))
 
 
 def comment(stream):
