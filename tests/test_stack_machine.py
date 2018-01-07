@@ -1,24 +1,34 @@
 from assembler.parser import *
 
 def test_string():
-    c_stream = stream(""" "hello" """)
-    _, token = quoted_string(**c_stream)
+    s = stream(""" "hello" """)
+    _, token = quoted_string(s)
     assert token == (Type.STRING, 'hello')
 
 def test_comment():
-    assert comment('; this is a comment\n', 0) == (19, True)
+    s = stream('; this is a comment\n')
+    _, token = comment(s)
+    assert token == True
 
 def test_label():
-    assert label('test:\n', 0) == (5, (Type.LABEL, 'test'))
+    s = stream('test:\n')
+    _, token = label(s)    
+    assert token == (Type.LABEL, 'test')
 
 def test_iadd(): 
-    assert operation('iadd\n', 0) == (4, Op.IADD)
+    s = stream('iadd\n')
+    _, token = operation(s)    
+    assert token == Op.IADD
 
 def test_integer():
-    assert integer('235\n') == (3, (Type.INTEGER, '235'))
+    s = stream('235\n')
+    _, token = integer(s)    
+    assert token == (Type.INTEGER, '235')
 
 def test_decimal():
-    assert decimal('2.35\n') == (4, (Type.DECIMAL, '2.35'))
+    s = stream('2.35\n')
+    _, token = decimal(s)    
+    assert token == (Type.DECIMAL, '2.35')    
 
 def test_ipush():
     assert operation('ipush 5635\n', 0) == (5, Op.IPUSH)

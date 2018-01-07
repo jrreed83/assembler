@@ -238,9 +238,9 @@ def label(stream):
             break
     else:
         return (ptr, None)
-#    print(stream)
+
     stream, token = string(stream)
-    print(stream)
+    
     if token is None:
         return (stream, None)
     _, label = token 
