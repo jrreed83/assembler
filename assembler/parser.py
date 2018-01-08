@@ -130,20 +130,22 @@ def match(char, stream):
 
 def quoted_string(stream):
     stream = space(stream)
+    stream0 = {**stream}
+
     stream, token_ = match('\"', stream)
     if token_ is None:
-        return (stream, None)
+        return (stream0, None)
 
     stream, token = string(stream)
 
     if token is None:
-        return (stream, None)
+        return (stream0, None)
 
     tag, val = token
 
-    ptr, token_ = match('\"', stream)
+    stream, token_ = match('\"', stream)
     if token_ is None:
-        return (stream, None)
+        return (stream0, None)
 
     return (stream, token)
     
@@ -163,28 +165,46 @@ def string(stream):
         c = input_string[stop]
     return ({**stream, 'ptr': stop}, (Type.STRING, input_string[start:stop]))
 
-
 def decimal(stream):
     stream = space(stream)
+    stream0 = {**stream}
     start = stream.get('ptr')
 
     stream, token = integer(stream)
     if token is None:
-        return (stream, None)
+        return (stream0, None)
 
     stream, token = match('.', stream)
     if token is None:    
-        return (stream, None)
+        return (stream0, None)
 
     stream, token = integer(stream)
     if token is None:
-        return (stream, None)    
+        return (stream0, None)    
     
-    stop = stream.get('ptr')
+    stop = stream['ptr']
     string = stream.get('string')
     number = string[start:stop]
+    stream = {**stream, 'ptr': stop}
     return (stream, (Type.DECIMAL, number))
 
+def tokenize(s):
+    accum = []
+    string = s['string']
+    n = len(string)    
+    action = statement
+
+    while 1:
+        s, token = action(s)
+    
+        ptr = s['ptr']
+        if token is None:
+            raise ValueError('Unexpected token')
+        if string[ptr:].isspace():
+            return accum
+        accum += [token]
+
+        action = statement
 
 
 class CPU():
@@ -237,7 +257,7 @@ def label(stream):
         if c == ':':
             break
     else:
-        return (ptr, None)
+        return (stream, None)
 
     stream, token = string(stream)
     
