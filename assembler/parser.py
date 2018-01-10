@@ -105,6 +105,35 @@ def space(stream):#string, start = 0):
         ptr += 1
     return {**stream, 'ptr': ptr}
 
+def trim(parser):
+    def wrapped_parser(*args, **kwargs):
+        string = kwargs['string']
+        print(string)
+        _, string_ = space_(string)
+        return parser(*args, {**kwargs, 'string': string_})
+    return wrapped_parser
+
+def space_(string):#string, start = 0):
+    for i, c in enumerate(string):
+        if not c.isspace():
+            break
+    consumed = i
+    return (consumed, string[consumed:])
+
+#@trim
+def integer_(string):
+    buffer = []
+    for i, c in enumerate(string):
+        if c.isdigit():
+            buffer += [c]
+        else:
+            break
+
+    if len(buffer) == 0:
+        return (0, None)
+    else:
+        return (i, (Type.INTEGER, ''.join(buffer)))        
+
 def integer(stream):
     stream = space(stream)
     start = stream.get('ptr')
@@ -118,6 +147,11 @@ def integer(stream):
     val = string[start:stop]
     return ({**stream, 'ptr': stop}, (Type.INTEGER, val))
 
+def match_(char, string):
+    if string[0] == char:
+        return (1, True)
+    else:
+        return (0, None) 
 
 def match(char, stream):
     stream = space(stream)
@@ -204,6 +238,7 @@ def tokenize(s):
             return accum
         accum += [token]
 
+        # Want state transitions here
         action = statement
 
 
@@ -298,6 +333,8 @@ def main():
     a = assemble(src)
     print(a.code[0:a.ip])
     print(a.constants[0:a.cp])
+
+
 if __name__ == '__main__':
     main()
         
