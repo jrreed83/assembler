@@ -149,7 +149,7 @@ def integer(stream):
 
 def match_(char, string):
     if string[0] == char:
-        # This
+        # This is a test
         return (1, True)
     else:
         return (0, None) 
