@@ -98,22 +98,15 @@ def statement(stream):
 
     return (stream, None)    
 
-def space(stream):#string, start = 0):
-    ptr = stream.get('ptr', 0)
-    string = stream.get('string')
-    while string[ptr].isspace():
-        ptr += 1
-    return {**stream, 'ptr': ptr}
+# def space(stream):#string, start = 0):
+#     ptr = stream.get('ptr', 0)
+#     string = stream.get('string')
+#     while string[ptr].isspace():
+#         ptr += 1
+#     return {**stream, 'ptr': ptr}
 
-def trim(parser):
-    def wrapped_parser(*args, **kwargs):
-        string = kwargs['string']
-        print(string)
-        _, string_ = space_(string)
-        return parser(*args, {**kwargs, 'string': string_})
-    return wrapped_parser
 
-def space_(string):#string, start = 0):
+def space(string):#string, start = 0):
     for i, c in enumerate(string):
         if not c.isspace():
             break
@@ -121,7 +114,7 @@ def space_(string):#string, start = 0):
     return (consumed, string[consumed:])
 
 #@trim
-def integer_(string):
+def integer(string):
     buffer = []
     for i, c in enumerate(string):
         if c.isdigit():
@@ -134,38 +127,38 @@ def integer_(string):
     else:
         return (i, (Type.INTEGER, ''.join(buffer)))        
 
-def integer(stream):
-    stream = space(stream)
-    start = stream.get('ptr')
-    stop = start
-    string = stream.get('string')
-    if not string[stop].isdigit():
-        return (stream, None)
+# def integer(stream):
+#     stream = space(stream)
+#     start = stream.get('ptr')
+#     stop = start
+#     string = stream.get('string')
+#     if not string[stop].isdigit():
+#         return (stream, None)
 
-    while string[stop].isdigit():
-        stop += 1 
-    val = string[start:stop]
-    return ({**stream, 'ptr': stop}, (Type.INTEGER, val))
+#     while string[stop].isdigit():
+#         stop += 1 
+#     val = string[start:stop]
+#     return ({**stream, 'ptr': stop}, (Type.INTEGER, val))
 
-def match_(char, string):
+def match(char, string):
+
+    result = (0, None)
     if string[0] == char:
         # This is a test
-        return (1, True)
-    else:
-        return (0, None) 
+        result = (1, char)
 
-def match(char, stream):
-    stream = space(stream)
-    string = stream.get('string')
-    ptr = stream.get('ptr')
-    if string[ptr] == char:
-        return ({**stream, 'ptr':ptr+1}, char)
-    return (stream, None) 
+    return result
+
+# def match(char, stream):
+#     stream = space(stream)
+#     string = stream.get('string')
+#     ptr = stream.get('ptr')
+#     if string[ptr] == char:
+#         return ({**stream, 'ptr':ptr+1}, char)
+#     return (stream, None) 
 
 
 def quoted_string(stream):
-    stream = space(stream)
-    stream0 = {**stream}
 
     stream, token_ = match('\"', stream)
     if token_ is None:
