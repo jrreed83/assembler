@@ -46,24 +46,7 @@ RESERVED = {
     'pop': Op.POP,
 }
 
-def stream(string):
-    return {'string': string, 'ptr': 0}
 
-class Assembler:
-    def __init__(self, input=''):
-        self.reserved = {}
-        self.pos = 0
-        self.start = 0
-        self.input = input
-        self.line = 0
-        self.code = [0] * 1000
-        self.constants = [0] * 1000
-        self.labels = {}
-        self.ip = 0 # instruction pointer
-        self.cp = 0 # constant pointer
-
-    def __repr__(self):
-        return '[{0}]'.format(self.pos)
 
 def reserved(keyword, string):
     n = len(keyword)   
