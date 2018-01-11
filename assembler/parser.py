@@ -65,53 +65,43 @@ class Assembler:
     def __repr__(self):
         return '[{0}]'.format(self.pos)
 
-def reserved(keyword, stream): 
-    stream = space(stream)
-    start = stream.get('ptr', 0)   
-    string = stream.get('string') 
-    stop = start + len(keyword)    
-    if keyword == string[start:stop]:
+def reserved(keyword, string):
+    n = len(keyword)   
+    if keyword == string[0:n]:
         token = RESERVED.get(keyword, None)
         if token is not None:
-            return ({**stream, 'ptr': stop}, token)
-    return (stream, None)
+            return (n, token)
+    return (0, None)
 
-def operation(stream):
+def operation(string):
     for key in RESERVED.keys():
-        stream, token = reserved(key, stream)
+        n, token = reserved(key, string)
         if token is not None:
-            return (stream, token)
-    return (stream, None)
+            return (n, token)
+    return (0, None)
 
-def statement(stream):
-    stream, token = operation(stream)
+def statement(string):
+
+    n, token = operation(string)
     if token is not None:
-        return (stream, token)
+        return (n, token)
 
-    stream, token = comment(stream)
+    n, token = comment(string)
     if token is not None:
-        return (stream, token)
+        return (n, token)
 
-    stream, token = label(stream)
+    n, token = label(string)
     if token is not None:
-        return (stream, token)
+        return (n, token)
 
-    return (stream, None)    
+    return (0, None)    
 
-# def space(stream):#string, start = 0):
-#     ptr = stream.get('ptr', 0)
-#     string = stream.get('string')
-#     while string[ptr].isspace():
-#         ptr += 1
-#     return {**stream, 'ptr': ptr}
-
-
-def space(string):#string, start = 0):
+def white_space(string):#string, start = 0):
     for i, c in enumerate(string):
         if not c.isspace():
             break
     consumed = i
-    return (consumed, string[consumed:])
+    return (consumed, True)
 
 #@trim
 def integer(string):
@@ -127,18 +117,6 @@ def integer(string):
     else:
         return (i, (Type.INTEGER, ''.join(buffer)))        
 
-# def integer(stream):
-#     stream = space(stream)
-#     start = stream.get('ptr')
-#     stop = start
-#     string = stream.get('string')
-#     if not string[stop].isdigit():
-#         return (stream, None)
-
-#     while string[stop].isdigit():
-#         stop += 1 
-#     val = string[start:stop]
-#     return ({**stream, 'ptr': stop}, (Type.INTEGER, val))
 
 def match(char, string):
 
@@ -149,72 +127,62 @@ def match(char, string):
 
     return result
 
-# def match(char, stream):
-#     stream = space(stream)
-#     string = stream.get('string')
-#     ptr = stream.get('ptr')
-#     if string[ptr] == char:
-#         return ({**stream, 'ptr':ptr+1}, char)
-#     return (stream, None) 
 
+def quoted_string(string_):
 
-def quoted_string(stream):
+    consumed = 0
+    n, _ = match('\"', string_)
+    if n == 0:
+        return (0, None)
+    consumed += n 
 
-    stream, token_ = match('\"', stream)
-    if token_ is None:
-        return (stream0, None)
-
-    stream, token = string(stream)
-
+    n, token = string(string_[consumed:])
     if token is None:
-        return (stream0, None)
+        return (0, None)
+    consumed += n 
 
-    tag, val = token
+    n, _ = match('\"', string_[consumed:])
+    if n == 0:
+        return (0, None)
+    consumed += n
 
-    stream, token_ = match('\"', stream)
-    if token_ is None:
-        return (stream0, None)
-
-    return (stream, token)
+    return (consumed, token)
     
 
-def string(stream):
-    stream = space(stream)
-    start = stream['ptr']
-    stop = start
-    input_string = stream['string']
-    c = input_string[stop]
+def string(string_):
+    
+    consumed = 0
+    c = string_[0]
     if not c.isalpha():
-        return (stream, None)
-    stop += 1
-    c = input_string[stop]
+        return (0, None)
+    consumed += 1
+    c = string_[consumed]
     while c.isalpha() or c.isdigit():
-        stop += 1
-        c = input_string[stop]
-    return ({**stream, 'ptr': stop}, (Type.STRING, input_string[start:stop]))
+        consumed += 1
+        c = string_[consumed]
+    val = string_[0:consumed]
+    return (consumed, (Type.STRING, val))
 
-def decimal(stream):
-    stream = space(stream)
-    stream0 = {**stream}
-    start = stream.get('ptr')
+def decimal(string):
+    consumed = 0
 
-    stream, token = integer(stream)
+    n, token = integer(string)
     if token is None:
-        return (stream0, None)
+        return (0, None)
+    consumed += n
 
-    stream, token = match('.', stream)
+    n, token = match('.', string[consumed:])
     if token is None:    
-        return (stream0, None)
+        return (0, None)
+    consumed += n 
 
-    stream, token = integer(stream)
+    n, token = integer(string[consumed:])
     if token is None:
-        return (stream0, None)    
+        return (0, None)  
+    consumed += n  
     
-    stop = stream['ptr']
-    string = stream.get('string')
-    number = string[start:stop]
-    stream = {**stream, 'ptr': stop}
-    return (stream, (Type.DECIMAL, number))
+    number = string[0:consumed]
+    return (consumed, (Type.DECIMAL, number))
 
 def tokenize(s):
     accum = []
@@ -278,27 +246,27 @@ class CPU():
 
             ptr, state = self.commit(result)
 
-def label(stream):
-    stream = space(stream)
-    input_string = stream['string']
-    ptr = stream['ptr'] 
-    for c in input_string[ptr:]:
+def label(string_):
+    for c in string_:
         if c == ':':
             break
     else:
-        return (stream, None)
+        return (0, None)
 
-    stream, token = string(stream)
-    
+    consumed = 0
+    n, token = string(string_)
     if token is None:
-        return (stream, None)
+        return (0, None)
+    print(token)
     _, label = token 
+    consumed += n 
 
-    stream, token = match(':', stream)
+    n, token = match(':', string_[consumed:])
     if token is None: 
-        return (stream, None)
-            
-    return (stream, (Type.LABEL, label))
+        return (0, None)
+    consumed += n 
+
+    return (consumed, (Type.LABEL, label))
 
 
 def comment(stream):
