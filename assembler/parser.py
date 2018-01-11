@@ -269,17 +269,14 @@ def label(string_):
     return (consumed, (Type.LABEL, label))
 
 
-def comment(stream):
-    stream, token = match(';', stream)
+def comment(string):
+    n, token = match(';', string)
     if token is None: 
-        return (stream, None)
-
-    string = stream.get('string')
-    ptr = stream.get('ptr')
-    while string[ptr] != '\n':
-        ptr += 1
-    return ({**stream, 'ptr': ptr}, True)
-
+        return (0, None)
+    for i, c in enumerate(string):
+        if c == '\n':
+            break 
+    return (i, True)
 
 def main():
     src = """iconst1
