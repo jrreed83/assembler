@@ -102,13 +102,8 @@ def integer(string):
 
 
 def match(char, string):
-
-    result = (0, None)
-    if string[0] == char:
-        # This is a test
-        result = (1, char)
-
-    return result
+    head, *tail = string
+    return (1, char) if head == char else (0, None)
 
 
 def quoted_string(string_):
@@ -187,47 +182,6 @@ def tokenize(s):
         action = statement
 
 
-class CPU():
-    def __init__(self):
-        self.code = []
-    def commit(self, result):
-        ptr, (tag, val) = result
-
-        if tag == Type.DECIMAL:
-            return (ptr, 'statement')
-        elif tag == Type.INTEGER:
-            val = int(val)
-            b0 = (val >> 0 ) & 0xff
-            b1 = (val >> 8 ) & 0xff 
-            b2 = (val >> 16) & 0xff
-            b3 = (val >> 24) & 0xff
-            self.code += [b0, b1, b2, b3] 
-            return (ptr, 'statement')
-        elif tag == Type.LABEL:
-            return (ptr, 'statement')
-        elif tag == Type.STRING:
-            return (ptr, 'statement') 
-        elif tag == Type.OPCODE:
-            self.code += [val.value]
-            if val in [Op.FADD, Op.IADD, Op.PRINT, Op.HALT]:
-                return (ptr, 'statement')
-            elif val == Op.IPUSH:
-                return (ptr, 'integer')
-            elif val == Op.SPUSH:
-                return (ptr, 'quoted_string')
-            elif val == Op.FPUSH:
-                return (ptr, 'decimal')
-    
-    def execute(self, string):
-        state = 'statement'
-        ptr = 0
-        while 1:
-            if state == 'statement':
-                result = statement(string, ptr)
-            elif state == 'integer':
-                result = integer(string, ptr)
-
-            ptr, state = self.commit(result)
 
 def label(string_):
     for c in string_:
