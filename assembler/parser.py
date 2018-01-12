@@ -144,19 +144,19 @@ def string(string_):
 def decimal(string):
     consumed = 0
 
-    n, token = integer(string)
-    if token is None:
-        return (0, None)
+    n, _ = integer(string)
+    if n == 0:
+        return (n, None)
     consumed += n
 
-    n, token = match('.', string[consumed:])
-    if token is None:    
-        return (0, None)
+    n, _ = match('.', string[consumed:])
+    if n == 0:    
+        return (n, None)
     consumed += n 
 
-    n, token = integer(string[consumed:])
-    if token is None:
-        return (0, None)  
+    n, _ = integer(string[consumed:])
+    if n == 0:
+        return (n, None)  
     consumed += n  
     
     number = string[0:consumed]
@@ -191,10 +191,11 @@ def label(string_):
         return (0, None)
 
     consumed = 0
+
     n, token = string(string_)
     if token is None:
         return (0, None)
-    print(token)
+    
     _, label = token 
     consumed += n 
 
@@ -215,24 +216,6 @@ def comment(string):
             break 
     return (i, True)
 
-def main():
-    src = """iconst1
-             iconst1
-             fpush 5.65
-             fpush 4.23
-             spush "hello"
-             iadd
-             print
-             halt
-          """  
-
-    a = assemble(src)
-    print(a.code[0:a.ip])
-    print(a.constants[0:a.cp])
-
-
-if __name__ == '__main__':
-    main()
         
 
 
