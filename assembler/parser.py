@@ -215,36 +215,12 @@ def comment(string):
             break 
     return (i, True)
 
-def tokenize(string):
-    action = statement
-    tokens = []
-    line_num = 1
-    while not string.isspace():
-        ptr, new_lines = white_space(string)
-        line_num += new_lines
-        string = string[ptr:]
-        ptr, tok = action(string)
-        if tok is None:
-            raise ValueError('Lexing error on Line {}'.format(line_num))
-        tokens += [tok]
-        string = string[ptr:]
-
-        if tok == Op.IPUSH:
-            action = integer 
-        elif tok == Op.FPUSH:
-            action = decimal 
-        elif tok == Op.SPUSH:
-            action = quoted_string
-        elif tok == Op.JUMP:
-            action = string
-        else:
-            action = statement
-    return tokens
-
-def tokenize_(string):
-    while not string.isspace():
-        n, tok = token(string)
-        if tok is not Type.SPACE:
-            yield tok
-        string = string[n:]
+def tokenize(chunks):
+    buffer = ''
+    for chunk in chunks:
+        buffer += chunk 
+        n, tok = token(buffer)
+        if tok and tok is not Type.SPACE:
+            yield tok 
+            buffer = buffer[n:]
 
