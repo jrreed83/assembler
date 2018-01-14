@@ -215,6 +215,12 @@ def comment(string):
             break 
     return (i, True)
 
+def gen_chunks():
+    yield 'iadd'
+    yield 'i'
+    yield 'p'
+    yield 'ush'
+    
 def tokenize(chunks):
     buffer = ''
     for chunk in chunks:
