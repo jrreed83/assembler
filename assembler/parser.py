@@ -8,6 +8,7 @@ class Type(Enum):
     INTEGER = 2 
     DECIMAL = 3
     LABEL = 4
+    SPACE = 5
 
 class Op(Enum):
     HALT = 1
@@ -63,6 +64,25 @@ def operation(string):
             return (n, token)
     return (0, None)
 
+def token(string):
+    n, token = operation(string)
+    if token is not None:
+        return (n, token)
+
+    n, token = comment(string)
+    if token is not None:
+        return (n, token)
+
+    n, token = label(string)
+    if token is not None:
+        return (n, token)
+
+    n, token = white_space(string)
+    if token is not None:
+        return (n, token)
+
+    return (0, None) 
+
 def statement(string):
 
     n, token = operation(string)
@@ -81,14 +101,11 @@ def statement(string):
 
 def white_space(string):
     consumed = 0
-    new_lines = 0
     for i, c in enumerate(string):
-        if c == '\n':
-            new_lines += 1
         if not c.isspace():
             break
     consumed = i
-    return consumed, new_lines
+    return consumed, Type.SPACE
 
 def integer(string):
     buffer = []
@@ -224,4 +241,10 @@ def tokenize(string):
             action = statement
     return tokens
 
+def tokenize_(string):
+    while not string.isspace():
+        n, tok = token(string)
+        if tok is not Type.SPACE:
+            yield tok
+        string = string[n:]
 
