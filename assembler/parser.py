@@ -79,14 +79,17 @@ def statement(string):
 
     return (0, None)    
 
-def white_space(string):#string, start = 0):
+def white_space(string):
+    consumed = 0
+    new_lines = 0
     for i, c in enumerate(string):
+        if c == '\n':
+            new_lines += 1
         if not c.isspace():
             break
     consumed = i
-    return (consumed, True)
+    return consumed, new_lines
 
-#@trim
 def integer(string):
     buffer = []
     for i, c in enumerate(string):
@@ -162,27 +165,6 @@ def decimal(string):
     number = string[0:consumed]
     return (consumed, (Type.DECIMAL, number))
 
-def tokenize(s):
-    accum = []
-    string = s['string']
-    n = len(string)    
-    action = statement
-
-    while 1:
-        s, token = action(s)
-    
-        ptr = s['ptr']
-        if token is None:
-            raise ValueError('Unexpected token')
-        if string[ptr:].isspace():
-            return accum
-        accum += [token]
-
-        # Want state transitions here
-        action = statement
-
-
-
 def label(string_):
     for c in string_:
         if c == ':':
@@ -216,6 +198,30 @@ def comment(string):
             break 
     return (i, True)
 
-        
+def tokenize(string):
+    action = statement
+    tokens = []
+    line_num = 1
+    while not string.isspace():
+        ptr, new_lines = white_space(string)
+        line_num += new_lines
+        string = string[ptr:]
+        ptr, tok = action(string)
+        if tok is None:
+            raise ValueError('Lexing error on Line {}'.format(line_num))
+        tokens += [tok]
+        string = string[ptr:]
+
+        if tok == Op.IPUSH:
+            action = integer 
+        elif tok == Op.FPUSH:
+            action = decimal 
+        elif tok == Op.SPUSH:
+            action = quoted_string
+        elif tok == Op.JUMP:
+            action = string
+        else:
+            action = statement
+    return tokens
 
 
