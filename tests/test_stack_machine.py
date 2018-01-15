@@ -14,7 +14,7 @@ def test_label():
 
 def test_iadd(): 
     n, token = operation('iadd\n')    
-    assert (n, token) == (4, Op.IADD)
+    assert (n, token) == (4, (Type.OPCODE,Op.IADD))
 
 def test_integer():
     n, token = integer('235\n')    
@@ -26,9 +26,9 @@ def test_decimal():
 
 def test_ipush():
     n, token = operation('ipush\n')    
-    assert (n, token) == (5, Op.IPUSH)
+    assert (n, token) == (5, (Type.OPCODE, Op.IPUSH))
 
 def test_print():
     n, token = operation('print\n')    
-    assert (n, token) == (5, Op.PRINT)
+    assert (n, token) == (5, (Type.OPCODE, Op.PRINT))
   

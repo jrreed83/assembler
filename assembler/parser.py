@@ -29,22 +29,22 @@ class Op(Enum):
     POP = 16
 
 RESERVED = {
-    'halt': Op.HALT,
-    'iadd': Op.IADD,
-    'isub': Op.ISUB,
-    'imul': Op.IMUL,
-    'iconst0': Op.ICONST0,
-    'iconst1': Op.ICONST1, 
-    'iconst2': Op.ICONST2,
-    'ipush': Op.IPUSH,
-    'print': Op.PRINT,    
-    'spush': Op.SPUSH,
-    'fpush': Op.FPUSH,  
-    'jump': Op.JUMP,
-    'fadd': Op.FADD,
-    'fmul': Op.FMUL,
-    'fsub': Op.FSUB,
-    'pop': Op.POP,
+    'halt': (Type.OPCODE, Op.HALT),
+    'iadd': (Type.OPCODE, Op.IADD),
+    'isub': (Type.OPCODE, Op.ISUB),
+    'imul': (Type.OPCODE, Op.IMUL),
+    'iconst0': (Type.OPCODE, Op.ICONST0),
+    'iconst1': (Type.OPCODE, Op.ICONST1), 
+    'iconst2': (Type.OPCODE, Op.ICONST2),
+    'ipush': (Type.OPCODE, Op.IPUSH),
+    'print': (Type.OPCODE, Op.PRINT),    
+    'spush': (Type.OPCODE, Op.SPUSH),
+    'fpush': (Type.OPCODE, Op.FPUSH),  
+    'jump': (Type.OPCODE, Op.JUMP),
+    'fadd': (Type.OPCODE, Op.FADD),
+    'fmul': (Type.OPCODE, Op.FMUL),
+    'fsub': (Type.OPCODE, Op.FSUB),
+    'pop': (Type.OPCODE, Op.POP),
 }
 
 
@@ -217,10 +217,9 @@ def comment(string):
 
 def gen_chunks():
     yield 'iadd'
-    yield 'i'
-    yield 'p'
-    yield 'ush'
-    
+    yield 'ipush'
+    yield 'fpush'
+
 def tokenize(chunks):
     buffer = ''
     for chunk in chunks:
@@ -229,4 +228,24 @@ def tokenize(chunks):
         if tok and tok is not Type.SPACE:
             yield tok 
             buffer = buffer[n:]
+        if tok is Type.SPACE:
+            buffer = buffer[n:]
 
+"""
+This is where the state machine should go
+"""
+def parser(tokens):
+    for tok in tokens:
+        (tag, val) = tok
+        if tag == Type.OPCODE:
+            yield val.value
+        else:
+            yield 'something else'
+        # Depending on the token, 
+        # we want to emit certain things
+
+if __name__ == '__main__':
+    chunks = gen_chunks()
+    tokens = tokenize(chunks)
+
+    print(list(tokens))
